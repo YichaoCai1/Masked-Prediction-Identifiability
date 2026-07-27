@@ -1,0 +1,15 @@
+# Core (E1/E2 exact enumeration, fits, tables, figures)
+numpy>=1.24
+scipy>=1.10
+pandas>=2.0
+pyarrow>=12.0          # parquet; code falls back to CSV if absent
+matplotlib>=3.7
+mpmath>=1.3            # high-precision cross-checks only (T3, numerical CI)
+
+# E3 (real corpora; streams from HuggingFace, needs network access)
+scikit-learn>=1.3
+datasets>=2.14
+transformers>=4.30
+
+# Testing
+pytest>=7.0
