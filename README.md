@@ -101,9 +101,11 @@ variance decomposed.
   $\varepsilon^{1/2}$; measured exponents $+1.0000$, $-0.4955$, $+0.4968$.
 - **E3** — the required shape is present (91× suppression on the bilingual
   pair, 183× on code vs prose), but its functional form is a **power law**, not
-  the exponential the theory assumes — and a strictly richer classifier moves
-  the level, not the exponent, so it is a property of the corpus rather than of
-  the estimator.
+  the exponential the theory assumes ($R^2 = 0.977$ vs $0.939$ on the bilingual
+  pair). A strictly richer classifier leaves that exponent essentially
+  untouched there ($-1.150 \to -1.149$) and steepens it by 18 % on code vs
+  prose ($-0.942 \to -1.109$), so the law belongs mostly to the corpus rather
+  than to the estimator's order-blindness.
 - **E4** — the cost is exactly $1/\pi$: at the mass an untruncated schedule
   provides, detection needs $\sim 1.6 \times 10^4$ examples; with no
   low-visibility mass at all, $\sim 10^{116}$.

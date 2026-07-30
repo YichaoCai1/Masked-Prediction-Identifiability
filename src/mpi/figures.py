@@ -86,7 +86,22 @@ BEST_FEATURES = "unigram_bigram"
 #: panel at one size, so none needs rescaling relative to the others.  (A1's
 #: total-variation strips and A2's two panels are deliberately different
 #: shapes; everything else is uniform within its figure.)
-M_PANEL = (3.8, 3.0)
+# Authored close to print size.  These panels go in a single row at roughly
+# 0.32\linewidth (1.76in) each, so a 3.8in source would be downscaled to 46%
+# and its 8.5pt type would render at 3.9pt.  Hardcoded annotation sizes do not
+# follow an rcParams bump, so the fix is to author small, not to enlarge type.
+# Authored a little under the old 3.8x3.0 so that everything -- type, marker
+# sizes, line widths, all fixed in points -- comes out proportionally larger
+# once the panel is scaled into its subfigure slot, without dropping any of the
+# panel content.
+M_PANEL = (3.2, 2.55)
+
+#: figure_M's panels sit in a single row, so each gets ~0.32\linewidth (1.76in).
+#: At that width there is no room for an in-panel legend or for the off-axis
+#: band annotations, and matplotlib does not reflow them -- it overlaps them.
+#: Compact mode drops that furniture and shortens the axis labels; the caption
+#: carries what it said.  Set False to restore the wide, self-contained panels.
+M_COMPACT = False
 A8_PANEL = (4.4, 3.3)
 
 #: Panel M(a) y-axis.  ``True`` plots ``Delta`` itself on a log axis, so the
@@ -270,7 +285,8 @@ def figure_M(art: dict, out_dir: Path, png: bool = False) -> None:
         ax.plot(m_ref, y(anchor - pc.rate_star * m_ref), color=INK, lw=1.0,
                 ls=(0, (6, 2, 1, 2)), alpha=0.75, zorder=4)
 
-        ax.set_xlabel(r"visible coordinates $m=|V|$")
+        ax.set_xlabel(r"visible size $m$" if M_COMPACT
+                      else r"visible coordinates $m=|V|$")
         if M_A_LOG_Y:
             ax.set_yscale("log")
             ax.set_ylabel(r"$\Delta_{N,m}$")
@@ -282,6 +298,8 @@ def figure_M(art: dict, out_dir: Path, png: bool = False) -> None:
         else:
             ax.set_ylabel(r"$\log\,\Delta_{N,m}$   (nats)")
         ax.set_xlim(-30, float(sub.m.max()) * 1.16)
+        if M_COMPACT:
+            return
         c0 = n_color(all_N[-1], all_N)
         ax.legend(
             [
@@ -324,40 +342,47 @@ def figure_M(art: dict, out_dir: Path, png: bool = False) -> None:
         # applies an e^{+-delta_I} variance comparison twice; drawing it to
         # scale would leave the panel empty.  Both edges are therefore shown
         # off-axis with their exact margins.
-        ax.annotate(
-            rf"$\rho\leq C_I={bands['C_I']:.0f}$  "
-            rf"(${bands['C_I']/rho_hi:.0f}\times$ above)",
-            xy=(0.5, 0.995), xytext=(0.5, 0.905), xycoords="axes fraction",
-            textcoords="axes fraction", ha="center", va="center",
-            fontsize=6.8, color=CAT[0],
-            arrowprops=dict(arrowstyle="-|>", color=CAT[0], lw=0.9,
-                            shrinkA=1.5, shrinkB=0),
-        )
-        ax.annotate(
-            rf"$\rho\geq c_I={bands['c_I']:.3f}$  "
-            rf"(${rho_lo/bands['c_I']:.0f}\times$ below)",
-            xy=(0.5, 0.005), xytext=(0.5, 0.095), xycoords="axes fraction",
-            textcoords="axes fraction", ha="center", va="center",
-            fontsize=6.8, color=CAT[0],
-            arrowprops=dict(arrowstyle="-|>", color=CAT[0], lw=0.9,
-                            shrinkA=1.5, shrinkB=0),
-        )
+        if not M_COMPACT:
+            ax.annotate(
+                rf"$\rho\leq C_I={bands['C_I']:.0f}$  "
+                rf"(${bands['C_I']/rho_hi:.0f}\times$ above)",
+                xy=(0.5, 0.995), xytext=(0.5, 0.905), xycoords="axes fraction",
+                textcoords="axes fraction", ha="center", va="center",
+                fontsize=6.8, color=CAT[0],
+                arrowprops=dict(arrowstyle="-|>", color=CAT[0], lw=0.9,
+                                shrinkA=1.5, shrinkB=0),
+            )
+            ax.annotate(
+                rf"$\rho\geq c_I={bands['c_I']:.3f}$  "
+                rf"(${rho_lo/bands['c_I']:.0f}\times$ below)",
+                xy=(0.5, 0.005), xytext=(0.5, 0.095), xycoords="axes fraction",
+                textcoords="axes fraction", ha="center", va="center",
+                fontsize=6.8, color=CAT[0],
+                arrowprops=dict(arrowstyle="-|>", color=CAT[0], lw=0.9,
+                                shrinkA=1.5, shrinkB=0),
+            )
         # nothing lies below rho(w), so the label goes under its own line
-        ax.annotate(rf"exact limit $\rho(w)={bands['rho_limit']:.0f}$",
-                    xy=(0.19, bands["rho_limit"]),
+        # mathtext, unlike LaTeX, requires the braced argument: \mathcal I fails
+        ax.annotate(rf"$\mathcal{{I}}(w)={bands['rho_limit']:.0f}$" if M_COMPACT
+                    else rf"exact limit $\rho(w)={bands['rho_limit']:.0f}$",
+                    xy=(0.22, bands["rho_limit"]),
                     xycoords=("axes fraction", "data"), xytext=(0, -4),
                     textcoords="offset points", ha="center", va="top",
                     color=CAT[1], fontsize=6.8)
 
         ax.set_xlabel(r"model mode weight $\lambda$")
-        ax.set_ylabel(r"$\rho_{N,m}(\lambda)=\mathfrak{D}/(U\cdot\mathrm{kl})$")
+        ax.set_ylabel(r"$\rho_{N,m}(\lambda)$" if M_COMPACT
+                      else r"$\rho_{N,m}(\lambda)=\mathfrak{D}/(U\cdot\mathrm{kl})$")
         # Lem. 4.1 states c_I * U * kl <= D <= C_I * U * kl.  Its two bounds are
         # not constants -- U*kl moves over 174 decades across these cells -- so
         # the inequality is divided through by U*kl > 0, which turns it into a
         # statement about a dimensionless ratio lying between two fixed levels.
         # That normalisation is what lets all 49 cells be checked in one axes.
-        corner_note(ax, r"Lem. 4.1 $\Leftrightarrow\ c_I\leq\rho\leq C_I$",
-                    xy=(0.02, 0.025), ha="left", va="bottom", fontsize=6.0)
+        if not M_COMPACT:
+            # top-left, not bottom-left: the lower band annotation is centred
+            # and its text reaches across into the bottom-left corner
+            corner_note(ax, r"Lem. 4.1 $\Leftrightarrow\ c_I\leq\rho\leq C_I$",
+                        xy=(0.02, 0.975), ha="left", va="top", fontsize=6.0)
 
     # ---------------------------------------------------------------- (c)
     eps_c = 1e-4
@@ -398,8 +423,10 @@ def figure_M(art: dict, out_dir: Path, png: bool = False) -> None:
 
         ax.set_xscale("log")
         ax.set_yscale("log")
-        ax.set_xlabel(r"low-visibility mass $\pi_s(\mu)$")
-        ax.set_ylabel(r"recovery radius $r(\varepsilon=10^{-4})$")
+        ax.set_xlabel(r"mass $\pi_s(\mu)$" if M_COMPACT
+                      else r"low-visibility mass $\pi_s(\mu)$")
+        ax.set_ylabel(r"$r(\varepsilon=10^{-4})$" if M_COMPACT
+                      else r"recovery radius $r(\varepsilon=10^{-4})$")
 
         # The censored cells all sit at r = c0/2, the half-width of I: there the
         # discrepancy is below eps across the *whole* admissible interval, so no
@@ -409,19 +436,23 @@ def figure_M(art: dict, out_dir: Path, png: bool = False) -> None:
         a, b = mode_weight_interval(w)
         ax.axhline(b - w, color=MUTED, lw=0.7, ls=(0, (1, 2)), zorder=0)
         ax.set_ylim(top=(b - w) * 1.75)
-        ax.annotate("open markers: no recovery within $I$",
-                    xy=(1.15e-5, (b - w) * 1.10), ha="left", va="bottom",
-                    fontsize=6.2, color=SECONDARY)
+        if not M_COMPACT:
+            ax.annotate("open markers: no recovery within $I$",
+                        xy=(1.15e-5, (b - w) * 1.10), ha="left", va="bottom",
+                        fontsize=6.2, color=SECONDARY)
 
         # no "censored" legend entry: three series contribute censored points
         # with three different markers, so a single proxy would mismatch them
-        ax.legend(loc="lower left", ncol=2, columnspacing=0.9)
+        ax.legend(loc="lower left", ncol=1, fontsize=6.0, labelspacing=0.25,
+                  handlelength=1.4, borderpad=0.25) if M_COMPACT else \
+            ax.legend(loc="lower left", ncol=2, columnspacing=0.9)
         # a single decade of major ticks reads as an unlabelled axis
         ax.yaxis.set_minor_formatter(
             plt.FuncFormatter(lambda v, _: f"{v:g}" if v in (0.02, 0.05, 0.2) else "")
         )
-        corner_note(ax, rf"$N={N_c}$,  $m_{{\rm base}}={m_base_c}$", xy=(0.98, 0.97),
-                    va="top")
+        if not M_COMPACT:
+            corner_note(ax, rf"$N={N_c}$,  $m_{{\rm base}}={m_base_c}$",
+                        xy=(0.98, 0.97), va="top")
 
     # one size for all three, so they can be re-laid-out as subfigures
     panels = [
@@ -576,7 +607,7 @@ def figure_A1(art: dict, out_dir: Path, png: bool = False) -> None:
                 # readable where it sits over curves
                 ax.legend(fontsize=6.2, ncol=2, loc="lower center",
                           columnspacing=0.8, handlelength=1.2, frameon=True,
-                          framealpha=0.88, edgecolor="none", facecolor="#fcfcfb")
+                          framealpha=0.88, edgecolor="none", facecolor=SURFACE)
 
         return draw
 
@@ -1018,21 +1049,27 @@ def _e3_result_draw(art: dict, corpora, main_text: bool = False):
         large_lo = float(best[best.arm == "large"].V.min())
         fs = 6.4 if main_text else 6.0
 
-        # which estimator is valid where; the strip between the arms is the
-        # empirical analogue of [s_pin, s_ov]
-        ax.axvspan(xmin, small_hi * 1.06, color=MUTED, alpha=0.06, lw=0, zorder=0)
-        ax.axvspan(small_hi * 1.06, large_lo * 0.94, color=CAT[3], alpha=0.16,
+        # Which estimator is valid where; the strip between the arms is the
+        # empirical analogue of [s_pin, s_ov].  Only the strip and the
+        # classifier side are tinted: the surface is white by default, so
+        # shading is spent on the distinction that matters rather than on
+        # colouring in the whole panel.  Marker shape already separates the
+        # arms, so the tint only has to say "the bound changes direction here".
+        ax.axvspan(small_hi * 1.06, large_lo * 0.94, color=CAT[3], alpha=0.18,
                    lw=0, zorder=0)
-        ax.axvspan(large_lo * 0.94, xmax, color=MUTED, alpha=0.13, lw=0, zorder=0)
-        ax.annotate("posterior\n(lower bd.)", xy=(math.sqrt(xmin * small_hi), 0.985),
-                    xycoords=("data", "axes fraction"), ha="center", va="top",
-                    fontsize=fs - 0.4, color=SECONDARY, linespacing=0.95)
-        ax.annotate("classifier (upper bd.)", xy=(math.sqrt(large_lo * xmax), 0.985),
-                    xycoords=("data", "axes fraction"), ha="center", va="top",
-                    fontsize=fs - 0.4, color=SECONDARY)
-        ax.annotate("window", xy=(math.sqrt(small_hi * large_lo), 0.42),
-                    xycoords=("data", "axes fraction"), ha="center", va="center",
-                    fontsize=fs - 0.4, color=SECONDARY, rotation=90)
+        ax.axvspan(large_lo * 0.94, xmax, color=MUTED, alpha=0.10, lw=0, zorder=0)
+        # At main-text width these three region labels have no room; the
+        # caption names the arms instead.
+        if not (main_text and M_COMPACT):
+            ax.annotate("posterior\n(lower bd.)", xy=(math.sqrt(xmin * small_hi), 0.985),
+                        xycoords=("data", "axes fraction"), ha="center", va="top",
+                        fontsize=fs - 0.4, color=SECONDARY, linespacing=0.95)
+            ax.annotate("classifier (upper bd.)", xy=(math.sqrt(large_lo * xmax), 0.985),
+                        xycoords=("data", "axes fraction"), ha="center", va="top",
+                        fontsize=fs - 0.4, color=SECONDARY)
+            ax.annotate("window", xy=(math.sqrt(small_hi * large_lo), 0.42),
+                        xycoords=("data", "axes fraction"), ha="center", va="center",
+                        fontsize=fs - 0.4, color=SECONDARY, rotation=90)
 
         for corpus in corpora:
             c = E3_COLORS.get(corpus, CAT[0])
@@ -1063,16 +1100,19 @@ def _e3_result_draw(art: dict, corpora, main_text: bool = False):
                 yy = 1.9 * y0 * (vv / V0) ** -1.0
                 ax.plot(vv, yy, color=INK, lw=1.0, ls=(0, (4, 2)), alpha=0.7,
                         zorder=4)
-                ax.annotate(r"guide: $\propto |V|^{-1}$", xy=(vv[0], yy[0]),
-                            xytext=(3, 4), textcoords="offset points",
-                            ha="left", fontsize=fs, color=INK)
+                # Below the near end: above it collides with the "classifier
+                # (upper bd.)" region label, and the far end runs into the data.
+                if not M_COMPACT:
+                    ax.annotate(r"guide: $\propto |V|^{-1}$", xy=(vv[0], yy[0]),
+                                xytext=(3, -3), textcoords="offset points",
+                                ha="left", va="top", fontsize=fs, color=INK)
             drops = []
             for corpus in corpora:
                 a = best[(best.corpus == corpus) & (best.V == best.V.min())]
                 b = live[live.corpus == corpus].sort_values("V")
                 if len(a) and len(b):
                     drops.append(float(a.mmse_hat.iloc[0]) / float(b.mmse_hat.iloc[-1]))
-            if drops:
+            if drops and not M_COMPACT:
                 v_hi = int(live.V.max())
                 ax.annotate(rf"$\geq{min(drops):.0f}\times$ suppression"
                             "\n" rf"over $|V|=1\rightarrow{v_hi}$",
@@ -1099,8 +1139,9 @@ def _e3_result_draw(art: dict, corpora, main_text: bool = False):
 
         h = [Line2D([], [], color=E3_COLORS.get(c, CAT[0]), lw=2.0) for c in corpora]
         lab = [E3_LABELS.get(c, c) for c in corpora]
-        h.append(Patch(facecolor=MUTED, alpha=0.3, lw=0))
-        lab.append(r"band: $\widehat{\mathrm{mmse}}$ to Brier")
+        if not (main_text and M_COMPACT):   # the caption explains the band
+            h.append(Patch(facecolor=MUTED, alpha=0.3, lw=0))
+            lab.append(r"band: $\widehat{\mathrm{mmse}}$ to Brier")
         # only the classifier arm can be censored, so the proxy carries that
         # arm's marker; an "o" proxy would name a symbol that appears nowhere
         if bool(rd.floored.any()):
@@ -1109,7 +1150,7 @@ def _e3_result_draw(art: dict, corpora, main_text: bool = False):
             lab.append("censored")
         ax.legend(h, lab, fontsize=fs - 0.4, loc="lower left", labelspacing=0.3,
                   handlelength=1.6, frameon=True, framealpha=0.85,
-                  edgecolor="none", facecolor="#fcfcfb")
+                  edgecolor="none", facecolor=SURFACE)
 
     return draw
 
@@ -1120,12 +1161,14 @@ def figure_M_E3(art: dict, out_dir: Path, png: bool = False) -> None:
     if not _has(rd):
         return
     corpora = list(dict.fromkeys(rd.corpus))
-    fig, ax = plt.subplots(figsize=(4.4, 3.3))
+    # M_PANEL, not the A8 panel size: this sits beside figure_M's panels in the
+    # main-text float, and a 2x2 grid only lines up if all four share one aspect.
+    fig, ax = plt.subplots(figsize=M_PANEL)
     _e3_result_draw(art, corpora, main_text=True)(ax)
     # No drawn-in title, for the same reason standalone panels have none: this
     # goes into a float whose \caption names it.
     fig.tight_layout()
-    save(fig, out_dir / "figure_M_E3", png=png)
+    save(fig, out_dir / "figure_M_E3", png=png, tight=False)
     print("  figure_M_E3: single main-text panel")
 
 

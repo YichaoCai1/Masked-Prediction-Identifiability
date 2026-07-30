@@ -36,7 +36,10 @@ INK = "#0b0b0b"
 SECONDARY = "#52514e"
 MUTED = "#898781"
 GRID = "#e1e0d9"
-SURFACE = "#fcfcfb"
+# Pure white: figures sit on the page, not on a tinted card.  Deliberate
+# region shading (axvspan / axhspan / fill_between) is drawn *over* this,
+# so the regions that must stay distinguishable still are.
+SURFACE = "#ffffff"
 #: null control as one series among several (A2), where it must recede
 NULL_GREY = "#b8b6ae"
 #: null control overlaid on the data (M(a)), where it must be unmistakable.
