@@ -47,11 +47,11 @@ NULL_GREY = "#b8b6ae"
 #: nowhere else in that panel; the dotted pattern still reads as "control".
 NULL_ACCENT = "#eb6834"
 
-# -- categorical slots (first three validate all-pairs, both CVD gates) -----
-CAT = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"]
+# -- categorical slots (harmonised with E3 violet/red/green) ----------------
+CAT = ["#4a3aa7", "#e34948", "#008300", "#d4820e"]
 
-# -- ordinal blue ramp for N (monotone L, light end clears 2:1 on surface) --
-N_RAMP = ["#86b6ef", "#3987e5", "#256abf", "#104281"]
+# -- ordinal violet ramp for N (harmonised with E3 palette) ------------------
+N_RAMP = ["#a99be0", "#7766cc", "#5544b0", "#3a2a80"]
 
 # -- E3 palette: deliberately outside the E1/E2 families --------------------
 # Colour identifies the *corpus*, marker the *estimator arm*, so the reader
@@ -79,13 +79,13 @@ def apply_style() -> None:
             "axes.titlesize": 9.5,
             "axes.titleweight": "bold",
             "axes.labelcolor": INK,
-            "axes.edgecolor": "#c3c2b7",
-            "axes.linewidth": 0.7,
-            "axes.spines.top": False,
-            "axes.spines.right": False,
+            "axes.edgecolor": "#b0afa8",
+            "axes.linewidth": 0.5,
+            "axes.spines.top": True,
+            "axes.spines.right": True,
             "axes.grid": True,
             "grid.color": GRID,
-            "grid.linewidth": 0.5,
+            "grid.linewidth": 0.35,
             "grid.alpha": 1.0,
             "xtick.color": MUTED,
             "ytick.color": MUTED,
@@ -93,8 +93,12 @@ def apply_style() -> None:
             "ytick.labelcolor": SECONDARY,
             "xtick.labelsize": 8,
             "ytick.labelsize": 8,
-            "xtick.direction": "out",
-            "ytick.direction": "out",
+            "xtick.direction": "in",
+            "ytick.direction": "in",
+            "xtick.top": False,
+            "xtick.minor.top": False,
+            "ytick.right": False,
+            "ytick.minor.right": False,
             "legend.fontsize": 7.5,
             "legend.frameon": False,
             "legend.handlelength": 1.8,
@@ -136,10 +140,13 @@ def law_style(law: str, param: float, pinned: bool) -> dict:
     return {"color": CAT[2], "linestyle": (0, (5, 1.5))}
 
 
-def annotate_panel(ax, letter: str, title: str, fontsize: float | None = None) -> None:
+def annotate_panel(ax, letter: str, title: str, fontsize: float | None = None,
+                   fontweight: str | None = None,
+                   show_letter: bool = True) -> None:
     """Centred panel title, so it sits over its own plot area rather than the figure."""
-    ax.set_title(f"({letter}) {title}", loc="center", pad=6, color=INK,
-                 fontsize=fontsize)
+    text = f"({letter}) {title}" if show_letter else title
+    ax.set_title(text, loc="center", pad=6, color=INK,
+                 fontsize=fontsize, fontweight=fontweight)
 
 
 def corner_note(ax, text: str, xy=(0.98, 0.02), ha="right", va="bottom",

@@ -1,0 +1,20 @@
+% Table M -- measured vs predicted (Law P, w = 1/2).
+% Uncertainties are NUMERICAL (fit window / KL scheme / precision),
+% not statistical: E1 and E2 contain no sampling noise.
+\begin{tabular}{llrrrrl}
+\toprule
+$\theta$ & $N$ & $\hat c_N$ & $\mathrm{rate}^\star$ & rel.\ err. & $[\hat u_0,\hat L]$ & $c\le\hat c_N\le L$ \\
+\midrule
+0.6 & 127 & 0.23130 & 0.22314 & 3.65\% & [0.250, 0.352] & \checkmark \\
+0.6 & 255 & 0.22739 & 0.22314 & 1.90\% & [0.250, 0.352] & \checkmark \\
+0.6 & 511 & 0.22531 & 0.22314 & 0.97\% & [0.250, 0.352] & \checkmark \\
+0.6 & 1023 & 0.22443 & 0.22314 & 0.58\% & [0.250, 0.352] & \checkmark \\
+0.8 & 127 & 0.51969 & 0.51083 & 1.73\% & [0.250, 0.719] & \checkmark \\
+0.8 & 255 & 0.51533 & 0.51083 & 0.88\% & [0.250, 0.719] & \checkmark \\
+0.8 & 511 & 0.51310 & 0.51083 & 0.45\% & [0.250, 0.719] & \checkmark \\
+0.8 & 1023 & 0.51219 & 0.51083 & 0.27\% & [0.250, 0.719] & \checkmark \\
+\midrule
+\multicolumn{7}{l}{$\rho$ over all cells at $w=1/2$: $[4.000,\,4.408]\subseteq[c_I,C_I]=[0.049,\,432]$} \\
+\multicolumn{7}{l}{predicted $u_0=1/4$, $L=L_0+\eta_N$, $c=\theta^2/16$} \\
+\bottomrule
+\end{tabular}

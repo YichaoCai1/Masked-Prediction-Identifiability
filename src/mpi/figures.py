@@ -94,7 +94,23 @@ BEST_FEATURES = "unigram_bigram"
 # sizes, line widths, all fixed in points -- comes out proportionally larger
 # once the panel is scaled into its subfigure slot, without dropping any of the
 # panel content.
-M_PANEL = (3.2, 2.55)
+#: Every panel is authored a little smaller than its natural size, which makes
+#: its type render correspondingly larger once placed in the paper.  This is a
+#: uniform scale on the sizes the panels were designed at -- it does not touch
+#: any panel's internal layout, so legends and annotations keep the positions
+#: they were tuned for.  Sizing panels per-slot instead (so every figure hits
+#: one rendered type size) forces 3-across panels down to ~2.4in, at which
+#: point their legends have to be shrunk and repositioned; that changes how the
+#: panels look, which is not worth uniformity.
+FONT_BUMP = 1.15
+
+
+def bumped(w: float, h: float) -> tuple[float, float]:
+    """The design size, scaled so type renders ``FONT_BUMP`` times larger."""
+    return (round(w / FONT_BUMP, 2), round(h / FONT_BUMP, 2))
+
+
+M_PANEL = bumped(3.2, 2.55)
 
 #: figure_M's panels sit in a single row, so each gets ~0.32\linewidth (1.76in).
 #: At that width there is no room for an in-panel legend or for the off-axis
@@ -102,7 +118,11 @@ M_PANEL = (3.2, 2.55)
 #: Compact mode drops that furniture and shortens the axis labels; the caption
 #: carries what it said.  Set False to restore the wide, self-contained panels.
 M_COMPACT = False
-A8_PANEL = (4.4, 3.3)
+A8_PANEL = bumped(4.4, 3.3)
+#: A8(c)-(e) sit three-across in the paper, in the same slot as figure_M's
+#: panels, so they are authored at figure_M's width and therefore render at
+#: the same type size.  A8(a)-(b) sit two-across and keep the wider size.
+A8_NARROW = (M_PANEL[0], round(M_PANEL[0] * 3.3 / 4.4, 2))
 
 #: Panel M(a) y-axis.  ``True`` plots ``Delta`` itself on a log axis, so the
 #: tick labels are magnitudes (10^0 ... 10^-171) and the reader sees *how
@@ -126,6 +146,8 @@ class Panel:
     draw: Callable[[Axes], None]              # must only touch the given Axes
     figsize: tuple[float, float]              # size when rendered standalone
     title_size: float | None = None
+    title_weight: str | None = None
+    show_letter: bool = True
 
 
 def _grid(nrows: int, ncols: int, **kw):
@@ -153,7 +175,9 @@ def render(name: str, panels: list[Panel], compose, combined_figsize,
     axes = compose(fig)
     for panel, ax in zip(panels, axes):
         panel.draw(ax)
-        annotate_panel(ax, panel.key, panel.title, panel.title_size)
+        annotate_panel(ax, panel.key, panel.title, panel.title_size,
+                       fontweight=panel.title_weight,
+                       show_letter=panel.show_letter)
     for spare in axes[len(panels):]:      # ragged grids leave empty slots
         spare.set_axis_off()
     if tight_kw is not None:
@@ -194,7 +218,7 @@ def _load(results_dir: Path) -> dict[str, pd.DataFrame | None]:
         "constants", "profiles", "summary", "fits", "numerics",
         "boost", "boostfits", "uscale",
         "realdata", "realdata_fits", "realdata_stats", "realdata_calib",
-        "realdata_form", "sampling", "audit",
+        "realdata_form", "sampling", "audit", "training",
     ):
         try:
             out[name] = read_table(name, results_dir)
@@ -272,8 +296,8 @@ def figure_M(art: dict, out_dir: Path, png: bool = False) -> None:
                     color=c, zorder=5)
             ax.annotate(f"$N={int(N)}$",
                         xy=(g.m.iloc[-1], y(g.logDelta.iloc[-1])),
-                        xytext=(0, 6), textcoords="offset points", fontsize=6.6,
-                        color=c, ha="center", va="bottom")
+                        xytext=(5, 3), textcoords="offset points", fontsize=6.6,
+                        color=c, ha="left", va="bottom")
 
         for row in fit_rows.itertuples():
             xs = np.array([row.fit_lo, row.fit_hi])
@@ -353,7 +377,9 @@ def figure_M(art: dict, out_dir: Path, png: bool = False) -> None:
                                 shrinkA=1.5, shrinkB=0),
             )
             ax.annotate(
-                rf"$\rho\geq c_I={bands['c_I']:.3f}$  "
+                # 4 decimals, not 3: c_I = 0.0493827... and rounding to 0.049
+                # loses the digit that makes the 81x margin reproducible
+                rf"$\rho\geq c_I={bands['c_I']:.4f}$  "
                 rf"(${rho_lo/bands['c_I']:.0f}\times$ below)",
                 xy=(0.5, 0.005), xytext=(0.5, 0.095), xycoords="axes fraction",
                 textcoords="axes fraction", ha="center", va="center",
@@ -361,14 +387,16 @@ def figure_M(art: dict, out_dir: Path, png: bool = False) -> None:
                 arrowprops=dict(arrowstyle="-|>", color=CAT[0], lw=0.9,
                                 shrinkA=1.5, shrinkB=0),
             )
-        # nothing lies below rho(w), so the label goes under its own line
+        # Above the star, not below the line: below it the label runs into the
+        # lower band annotation, which is centred and reaches left.  Directly
+        # over lambda = w is the one clear spot -- every curve attains its
+        # minimum there, so they fan away from it on both sides.
         # mathtext, unlike LaTeX, requires the braced argument: \mathcal I fails
         ax.annotate(rf"$\mathcal{{I}}(w)={bands['rho_limit']:.0f}$" if M_COMPACT
                     else rf"exact limit $\rho(w)={bands['rho_limit']:.0f}$",
-                    xy=(0.22, bands["rho_limit"]),
-                    xycoords=("axes fraction", "data"), xytext=(0, -4),
-                    textcoords="offset points", ha="center", va="top",
-                    color=CAT[1], fontsize=6.8)
+                    xy=(w, bands["rho_limit"]),
+                    xytext=(0, 9), textcoords="offset points",
+                    ha="center", va="bottom", color=CAT[1], fontsize=6.8)
 
         ax.set_xlabel(r"model mode weight $\lambda$")
         ax.set_ylabel(r"$\rho_{N,m}(\lambda)$" if M_COMPACT
@@ -378,11 +406,6 @@ def figure_M(art: dict, out_dir: Path, png: bool = False) -> None:
         # the inequality is divided through by U*kl > 0, which turns it into a
         # statement about a dimensionless ratio lying between two fixed levels.
         # That normalisation is what lets all 49 cells be checked in one axes.
-        if not M_COMPACT:
-            # top-left, not bottom-left: the lower band annotation is centred
-            # and its text reaches across into the bottom-left corner
-            corner_note(ax, r"Lem. 4.1 $\Leftrightarrow\ c_I\leq\rho\leq C_I$",
-                        xy=(0.02, 0.975), ha="left", va="top", fontsize=6.0)
 
     # ---------------------------------------------------------------- (c)
     eps_c = 1e-4
@@ -436,16 +459,12 @@ def figure_M(art: dict, out_dir: Path, png: bool = False) -> None:
         a, b = mode_weight_interval(w)
         ax.axhline(b - w, color=MUTED, lw=0.7, ls=(0, (1, 2)), zorder=0)
         ax.set_ylim(top=(b - w) * 1.75)
-        if not M_COMPACT:
-            ax.annotate("open markers: no recovery within $I$",
-                        xy=(1.15e-5, (b - w) * 1.10), ha="left", va="bottom",
-                        fontsize=6.2, color=SECONDARY)
 
         # no "censored" legend entry: three series contribute censored points
         # with three different markers, so a single proxy would mismatch them
         ax.legend(loc="lower left", ncol=1, fontsize=6.0, labelspacing=0.25,
                   handlelength=1.4, borderpad=0.25) if M_COMPACT else \
-            ax.legend(loc="lower left", ncol=2, columnspacing=0.9)
+            ax.legend(loc="lower left", ncol=1, labelspacing=0.3)
         # a single decade of major ticks reads as an unlabelled axis
         ax.yaxis.set_minor_formatter(
             plt.FuncFormatter(lambda v, _: f"{v:g}" if v in (0.02, 0.05, 0.2) else "")
@@ -628,11 +647,13 @@ def figure_A1(art: dict, out_dir: Path, png: bool = False) -> None:
         for regime, (law, param) in regimes:
             panels.append(Panel(letters[k], f"$N={N}$, {regime}",
                                 make_profile(N, law, param, regime == "pinned"),
-                                (3.7, 2.6)))
+                                (3.7, 2.6), title_weight="normal",
+                                show_letter=False))
             k += 1
     for regime, (law, param) in regimes:
         panels.append(Panel(letters[k], f"total variation, {regime}",
-                            make_strip(law, param), (3.7, 1.8)))
+                            make_strip(law, param), (3.7, 1.8),
+                            title_weight="normal", show_letter=False))
         k += 1
 
     def compose(fig):
@@ -713,8 +734,8 @@ def figure_A2(art: dict, out_dir: Path, png: bool = False) -> None:
         ax.legend(loc="lower left", fontsize=7)
 
     panels = [
-        Panel("a", "measured rate vs prediction", draw_a, (5.0, 3.3)),
-        Panel("b", "decay at fixed visible fraction", draw_b, (4.0, 3.3)),
+        Panel("a", "measured rate vs prediction", draw_a, bumped(5.0, 3.3)),
+        Panel("b", "decay at fixed visible fraction", draw_b, bumped(4.0, 3.3)),
     ]
     render("A2", panels, _grid(1, 2, gridspec_kw={"width_ratios": [1.55, 1.0]}),
            (8.4, 3.3), out_dir, png, tight_kw={})
@@ -739,24 +760,24 @@ def figure_A3(art: dict, out_dir: Path, png: bool = False) -> None:
             ax.plot(g.pi, g.kappa_exact, color=CAT[j % len(CAT)], lw=1.3,
                     label=rf"$s={s}$")
             ax.plot(g.pi, g.kappa_fit, color=CAT[j % len(CAT)], lw=0,
-                    marker=MARKERS[j], ms=3.8, mfc="none")
+                    marker=MARKERS[j], ms=4.2, mfc="none")
         ref = g_all[(g_all.s == 0) & (g_all.pi > 0)].sort_values("pi")
         if not ref.empty:
             p0, k0 = float(ref.pi.iloc[-1]), float(ref.kappa_exact.iloc[-1])
             pp = np.array([float(ref.pi.min()), p0])
             ax.plot(pp, k0 * (pp / p0), color=INK, lw=0.9, ls=(0, (4, 2)), alpha=0.6)
             ax.annotate("slope $1$", xy=(0.06, 0.82), xycoords="axes fraction",
-                        fontsize=7)
+                        fontsize=8.5)
         ax.set_xscale("log")
         ax.set_yscale("log")
         ax.set_xlabel(r"$\pi_s(\mu)$")
         ax.set_ylabel(r"$\varkappa(\pi,s)$")
         h, l = ax.get_legend_handles_labels()
         h += [Line2D([], [], color=MUTED, lw=1.3),
-              Line2D([], [], color=MUTED, lw=0, marker="o", ms=3.8, mfc="none")]
+              Line2D([], [], color=MUTED, lw=0, marker="o", ms=4.2, mfc="none")]
         l += ["exact", "numerical fit"]
-        ax.legend(h, l, loc="lower right", ncol=2, columnspacing=0.9, fontsize=6.6)
-        corner_note(ax, note, xy=(0.03, 0.97), ha="left", va="top")
+        ax.legend(h, l, loc="lower right", ncol=2, columnspacing=0.9, fontsize=8.0)
+        corner_note(ax, note, xy=(0.03, 0.97), ha="left", va="top", fontsize=7.5)
 
     def draw_b(ax: Axes) -> None:
         for j, s in enumerate(sorted(g_all.s.unique())):
@@ -774,13 +795,13 @@ def figure_A3(art: dict, out_dir: Path, png: bool = False) -> None:
             ax.plot(ee, r0 * (ee / e0) ** 0.5, color=INK, lw=0.9, ls=(0, (4, 2)),
                     alpha=0.6)
             ax.annotate("slope $+1/2$", xy=(0.06, 0.82), xycoords="axes fraction",
-                        fontsize=7)
+                        fontsize=8.5)
         ax.set_xscale("log")
         ax.set_yscale("log")
         ax.set_xlabel(r"$\varepsilon$")
         ax.set_ylabel(r"$r(\varepsilon)$")
-        ax.legend(loc="lower right")
-        corner_note(ax, note, xy=(0.03, 0.97), ha="left", va="top")
+        ax.legend(loc="lower right", fontsize=8.0)
+        corner_note(ax, note, xy=(0.03, 0.97), ha="left", va="top", fontsize=7.5)
 
     def draw_c(ax: Axes) -> None:
         prof = _sel(profiles, law=law, param=param, w=w, N=N, grid="I")
@@ -806,13 +827,14 @@ def figure_A3(art: dict, out_dir: Path, png: bool = False) -> None:
         ax.set_ylim(lo_v * 0.2, hi_v * 20.0)
         ax.set_xlabel(r"$\lambda$")
         ax.set_ylabel(r"$\mathfrak{D}_{\rm boost}(\lambda)$")
-        ax.legend(loc="lower left", fontsize=6.8)
-        corner_note(ax, note, xy=(0.97, 0.55), ha="right", va="center")
+        ax.legend(loc="lower left", fontsize=8.0)
+        corner_note(ax, note, xy=(0.97, 0.55), ha="right", va="center", fontsize=7.5)
 
+    A3_PANEL = bumped(3.8, 3.1)
     panels = [
-        Panel("a", "curvature", draw_a, (3.8, 3.1)),
-        Panel("b", r"radius vs tolerance ($\pi=10^{-2}$)", draw_b, (3.8, 3.1)),
-        Panel("c", r"curvature restoration ($\pi=10^{-2}$)", draw_c, (3.8, 3.1)),
+        Panel("a", "curvature", draw_a, A3_PANEL, M_TITLE_SIZE),
+        Panel("b", r"radius vs tolerance ($\pi=10^{-2}$)", draw_b, A3_PANEL, M_TITLE_SIZE),
+        Panel("c", r"curvature restoration ($\pi=10^{-2}$)", draw_c, A3_PANEL, M_TITLE_SIZE),
     ]
     render("A3", panels, _grid(1, 3), (9.4, 3.1), out_dir, png, tight_kw={})
 
@@ -838,7 +860,7 @@ def figure_A4(art: dict, out_dir: Path, png: bool = False) -> None:
         ax.plot([0], [math.log(w * (1 - w))], marker="*", ms=11, color=CAT[1], zorder=5)
         ax.annotate(rf"exact anchor $U_{{N,0}}=w(1-w)={w*(1-w):.2f}$",
                     xy=(0, math.log(w * (1 - w))), xytext=(10, -4),
-                    textcoords="offset points", fontsize=7.2, color=CAT[1], va="top")
+                    textcoords="offset points", fontsize=8.5, color=CAT[1], va="top")
 
         pc = ProductConstants(param, int(Ns[-1]))
         ss = np.linspace(0, float(g_all.s.max()), 50)
@@ -847,11 +869,11 @@ def figure_A4(art: dict, out_dir: Path, png: bool = False) -> None:
                 label=rf"certified $u_0e^{{-Ls}}$, $L=L_0+\eta_N={pc.L:.3f}$")
         ax.set_xlabel("$s$ (visible coordinates under the boost)")
         ax.set_ylabel(r"$\log U_{N,s}$")
-        ax.legend(loc="lower left", fontsize=7)
+        ax.legend(loc="lower left", fontsize=8.5)
 
     panels = [Panel("a", "low-visibility residual mode uncertainty", draw_a,
-                    (5.2, 3.5))]
-    render("A4", panels, _grid(1, 1), (5.2, 3.5), out_dir, png, tight_kw={})
+                    bumped(5.2, 3.5), M_TITLE_SIZE)]
+    render("A4", panels, _grid(1, 1), bumped(5.2, 3.5), out_dir, png, tight_kw={})
 
 
 def figure_A5(art: dict, out_dir: Path, png: bool = False) -> None:
@@ -899,8 +921,8 @@ def figure_A5(art: dict, out_dir: Path, png: bool = False) -> None:
 
     panels = [
         Panel("a", r"flows $F^+_{N,m}$ (solid) vs $\Delta_{N,m}$ (dotted)",
-              draw_a, (4.3, 3.2)),
-        Panel("b", "boosted flow", draw_b, (4.3, 3.2)),
+              draw_a, bumped(4.3, 3.2)),
+        Panel("b", "boosted flow", draw_b, bumped(4.3, 3.2)),
     ]
     render("A5", panels, _grid(1, 2), (8.2, 3.2), out_dir, png, tight_kw={})
 
@@ -967,9 +989,9 @@ def figure_A6(art: dict, out_dir: Path, png: bool = False) -> None:
         ax.set_ylabel(r"$\rho_{N,m}(\lambda)$")
 
     panels = [
-        Panel("a", rf"profiles, $w=0.9$, $N={N}$", draw_a, (4.3, 3.2)),
+        Panel("a", rf"profiles, $w=0.9$, $N={N}$", draw_a, bumped(4.3, 3.2)),
         Panel("b", rf"$\rho$ band, $\rho(w)={bands['rho_limit']:.1f}$", draw_b,
-              (4.3, 3.2)),
+              bumped(4.3, 3.2)),
     ]
     render("A6", panels, _grid(1, 2), (8.4, 3.2), out_dir, png, tight_kw={})
 
@@ -1017,8 +1039,8 @@ def figure_A7(art: dict, out_dir: Path, png: bool = False) -> None:
         ax.set_ylabel(r"$|\Delta\hat c_N|$")
 
     panels = [
-        Panel("a", "float64 vs mpmath", draw_a, (4.3, 3.2)),
-        Panel("b", "slope sensitivity per knob", draw_b, (4.3, 3.2)),
+        Panel("a", "float64 vs mpmath", draw_a, bumped(4.3, 3.2)),
+        Panel("b", "slope sensitivity per knob", draw_b, bumped(4.3, 3.2)),
     ]
     render("A7", panels, _grid(1, 2), (8.4, 3.2), out_dir, png, tight_kw={})
 
@@ -1047,7 +1069,7 @@ def _e3_result_draw(art: dict, corpora, main_text: bool = False):
         xmin, xmax = 0.62, float(best.V.max()) * 2.2
         small_hi = float(best[best.arm == "small"].V.max())
         large_lo = float(best[best.arm == "large"].V.min())
-        fs = 6.4 if main_text else 6.0
+        fs = 6.4 if main_text else 7.5
 
         # Which estimator is valid where; the strip between the arms is the
         # empirical analogue of [s_pin, s_ov].  Only the strip and the
@@ -1061,15 +1083,22 @@ def _e3_result_draw(art: dict, corpora, main_text: bool = False):
         # At main-text width these three region labels have no room; the
         # caption names the arms instead.
         if not (main_text and M_COMPACT):
-            ax.annotate("posterior\n(lower bd.)", xy=(math.sqrt(xmin * small_hi), 0.985),
-                        xycoords=("data", "axes fraction"), ha="center", va="top",
+            # Left-aligned and set in from the spine: centring it in a band
+            # this narrow puts the first letter on the axis, and starting at
+            # the very left runs it into the curves, which are still near the
+            # top of the panel at their first few visible sizes.
+            ax.annotate("posterior", xy=(xmin * 2.8, 0.985),
+                        xycoords=("data", "axes fraction"), ha="left", va="top",
                         fontsize=fs - 0.4, color=SECONDARY, linespacing=0.95)
-            ax.annotate("classifier (upper bd.)", xy=(math.sqrt(large_lo * xmax), 0.985),
+            ax.annotate("classifier", xy=(math.sqrt(large_lo * xmax), 0.985),
                         xycoords=("data", "axes fraction"), ha="center", va="top",
                         fontsize=fs - 0.4, color=SECONDARY)
-            ax.annotate("window", xy=(math.sqrt(small_hi * large_lo), 0.42),
+            # the window strip is the one *structural* boundary in the panel --
+            # where the estimator, and with it the bound direction, changes --
+            # so it is named in the palette red rather than in the muted ink
+            ax.annotate("window", xy=(math.sqrt(small_hi * large_lo), 0.72),
                         xycoords=("data", "axes fraction"), ha="center", va="center",
-                        fontsize=fs - 0.4, color=SECONDARY, rotation=90)
+                        fontsize=fs - 0.4, color=CAT[1], rotation=90)
 
         for corpus in corpora:
             c = E3_COLORS.get(corpus, CAT[0])
@@ -1103,8 +1132,10 @@ def _e3_result_draw(art: dict, corpora, main_text: bool = False):
                 # Below the near end: above it collides with the "classifier
                 # (upper bd.)" region label, and the far end runs into the data.
                 if not M_COMPACT:
-                    ax.annotate(r"guide: $\propto |V|^{-1}$", xy=(vv[0], yy[0]),
-                                xytext=(3, -3), textcoords="offset points",
+                    # further right and lower: the guide descends to the right,
+                    # so a label just below its start still crosses it
+                    ax.annotate(r"$\propto |V|^{-1}$", xy=(vv[0], yy[0]),
+                                xytext=(20, -8), textcoords="offset points",
                                 ha="left", va="top", fontsize=fs, color=INK)
             drops = []
             for corpus in corpora:
@@ -1112,24 +1143,18 @@ def _e3_result_draw(art: dict, corpora, main_text: bool = False):
                 b = live[live.corpus == corpus].sort_values("V")
                 if len(a) and len(b):
                     drops.append(float(a.mmse_hat.iloc[0]) / float(b.mmse_hat.iloc[-1]))
-            if drops and not M_COMPACT:
-                v_hi = int(live.V.max())
-                ax.annotate(rf"$\geq{min(drops):.0f}\times$ suppression"
-                            "\n" rf"over $|V|=1\rightarrow{v_hi}$",
-                            xy=(0.98, 0.70), xycoords="axes fraction",
-                            ha="right", fontsize=fs - 0.3, color=SECONDARY)
         elif _has(rdf):
             prim = rdf[(rdf.corpus == "code_prose") & (rdf.arm == "small")]
             if len(prim):
                 ax.annotate(rf"$\hat u_0={prim.u0_hat.iloc[0]:.3f}$, "
                             rf"$\hat L={prim.L_hat.iloc[0]:.3f}$",
                             xy=(0.03, 0.30), xycoords="axes fraction",
-                            fontsize=6.4, color=E3_COLORS["code_prose"])
+                            fontsize=7.5, color=E3_COLORS["code_prose"])
             sec = rdf[(rdf.corpus == "bilingual") & (rdf.arm == "large")]
             if len(sec):
                 ax.annotate(rf"$\hat\kappa={sec.kappa_hat.iloc[0]:.4f}$",
                             xy=(0.98, 0.78), xycoords="axes fraction", ha="right",
-                            fontsize=6.4, color=E3_COLORS["bilingual"])
+                            fontsize=7.5, color=E3_COLORS["bilingual"])
 
         ax.set_xscale("log")
         ax.set_yscale("log")
@@ -1161,8 +1186,7 @@ def figure_M_E3(art: dict, out_dir: Path, png: bool = False) -> None:
     if not _has(rd):
         return
     corpora = list(dict.fromkeys(rd.corpus))
-    # M_PANEL, not the A8 panel size: this sits beside figure_M's panels in the
-    # main-text float, and a 2x2 grid only lines up if all four share one aspect.
+    # same size as figure_M's panels: this is the main-text E3 counterpart.
     fig, ax = plt.subplots(figsize=M_PANEL)
     _e3_result_draw(art, corpora, main_text=True)(ax)
     # No drawn-in title, for the same reason standalone panels have none: this
@@ -1248,8 +1272,11 @@ def figure_A8(art: dict, out_dir: Path, png: bool = False) -> None:
         ax.annotate(rf"censored above ${thresh:g}\times$", xy=(0.03, thresh),
                     xycoords=ax.get_yaxis_transform(), ha="left", va="bottom",
                     fontsize=6.2, color=SECONDARY)
-        ax.annotate("calibrated: Brier $=$ mmse", xy=(0.97, 1.0),
-                    xycoords=ax.get_yaxis_transform(), ha="right", va="top",
+        # sits above the unit line at the second-largest |V|, where the total
+        # slack has already lifted off it and left the gap clear
+        x_lab = sorted(large.V.unique())[-2] if len(large.V.unique()) > 1 else 1.0
+        ax.annotate("calibrated", xy=(x_lab, 1.0), xytext=(0, 5),
+                    textcoords="offset points", ha="center", va="bottom",
                     fontsize=6.2, color=SECONDARY)
 
         h = [Line2D([], [], color=E3_COLORS.get(c, CAT[0]), lw=2.0)
@@ -1284,8 +1311,9 @@ def figure_A8(art: dict, out_dir: Path, png: bool = False) -> None:
         ax.set_xlabel(r"$|V|$")
         ax.set_ylabel("realised backoff order")
         ax.legend(fontsize=6.2, loc="upper left")
-        corner_note(ax, f"capped where counts fall below\n"
-                        f"{int(stats.backoff_threshold.iloc[0])} occurrences"
+        # one line, not two: at this panel width the longer form reaches across
+        # into the legend
+        corner_note(ax, f"capped below {int(stats.backoff_threshold.iloc[0])} counts"
                     if _has(stats) else "", xy=(0.97, 0.97), ha="right", va="top")
 
     def draw_e(ax: Axes) -> None:
@@ -1318,11 +1346,20 @@ def figure_A8(art: dict, out_dir: Path, png: bool = False) -> None:
                     ms=3.2, mfc="none"),
              Line2D([], [], color=MUTED, ls=styles[BEST_FEATURES], marker="s",
                     ms=3.2)]
-        lab = ["bag of tokens", "+ hashed bigrams"]
+        # Short feature labels, matching tab:exp-corpora-form's "uni" / "uni+bi":
+        # the corpus names are already long, and the legend has to fit into the
+        # corner the data vacates -- past the last classifier point at |V|=256
+        # only the lower curve remains, so the free region is about 30% of the
+        # axis width.  Narrowing the labels is what buys the fit; the frame is
+        # there so the descending curve cannot cut through a word if a longer
+        # corpus name is ever added.
+        lab = ["unigram", "+ bigrams"]
         h += [Line2D([], [], color=E3_COLORS.get(c, CAT[0]), lw=2.0) for c in corpora]
         lab += [E3_LABELS.get(c, c) for c in corpora]
-        ax.legend(h, lab, fontsize=5.9, loc="lower left", labelspacing=0.28,
-                  handlelength=1.8)
+        ax.legend(h, lab, fontsize=6.2, loc="upper right", ncol=1,
+                  labelspacing=0.24, handlelength=1.2, handletextpad=0.5,
+                  borderpad=0.3, frameon=True, framealpha=0.9,
+                  edgecolor="none", facecolor=SURFACE)
 
     def draw_f(ax: Axes) -> None:
         """Which functional form fits: the exponential Asm. 4.1 assumes, or a
@@ -1346,17 +1383,17 @@ def figure_A8(art: dict, out_dir: Path, png: bool = False) -> None:
         ax.set_xticks(x)
         ax.set_xticklabels(
             [E3_LABELS.get(c, c) + "\n" + fs.replace("_", "+")
-             for (c, fs), _ in rows], fontsize=5.6)
+             for (c, fs), _ in rows], fontsize=7.0)
         ax.set_ylim(0.0, 1.18)
         ax.set_ylabel(r"fit $R^2$")
         ax.axhline(1.0, color=MUTED, lw=0.6, ls=(0, (1, 2)))
-        ax.legend(fontsize=6.0, loc="lower left")
+        ax.legend(fontsize=7.5, loc="lower left")
         expo = [float(g[g.model == "power_law"].rate_or_exponent.iloc[0])
                 for _, g in rows]
         pw_r2 = [float(g[g.model == "power_law"].R2.iloc[0]) for _, g in rows]
         for xi, e, r in zip(x, expo, pw_r2):
             ax.annotate(rf"$V^{{{e:.2f}}}$", xy=(xi + 0.5 * wid, r + 0.02),
-                        ha="center", va="bottom", fontsize=5.8, color=CAT[0])
+                        ha="center", va="bottom", fontsize=7.2, color=CAT[0])
 
     panels = [
         # Ordered result -> the two analyses that qualify it -> the two
@@ -1365,12 +1402,12 @@ def figure_A8(art: dict, out_dir: Path, png: bool = False) -> None:
         # the composed 2x3 is a contact sheet, not a layout prescription.
         # Corpora / licences / protocol are not a figure -- they live in
         # documents/experiment_interpretation.md.
-        Panel("a", "residual mode MMSE on real corpora", draw_b, A8_PANEL),
-        Panel("b", "functional form of the decay", draw_f, A8_PANEL),
+        Panel("a", "residual mode MMSE on real corpora", draw_b, A8_PANEL, M_TITLE_SIZE),
+        Panel("b", "functional form of the decay", draw_f, A8_PANEL, M_TITLE_SIZE),
         Panel("c", "model class: does a richer classifier change the law?",
-              draw_e, A8_PANEL),
-        Panel("d", "slack in the upper bound, and its source", draw_a, A8_PANEL),
-        Panel("e", "realised backoff order — posterior arm", draw_c, A8_PANEL),
+              draw_e, A8_NARROW, M_TITLE_SIZE),
+        Panel("d", "slack in the upper bound, and its source", draw_a, A8_NARROW),
+        Panel("e", "realised backoff order — posterior arm", draw_c, A8_NARROW),
     ]
     render("A8", panels, _grid(2, 3), (3 * A8_PANEL[0], 2 * A8_PANEL[1]),
            out_dir, png, tight_kw={})
@@ -1416,7 +1453,7 @@ def figure_A9(art: dict, out_dir: Path, png: bool = False) -> None:
         ax.plot(x, y, color=INK, lw=0.9, ls=(0, (4, 2)), alpha=0.6, zorder=1)
         mid = len(x) // 2
         ax.annotate(label, xy=(x[mid], y[mid] * gap), ha="center", va=va,
-                    fontsize=7, color=INK)
+                    fontsize=8.5, color=INK)
 
     def draw_a(ax: Axes) -> None:
         """Examples needed to detect the largest error I asks about."""
@@ -1433,16 +1470,16 @@ def figure_A9(art: dict, out_dir: Path, png: bool = False) -> None:
         ax.axvline(1.0 / N, color=NULL_ACCENT, lw=1.0, ls=(0, (1, 1.6)), zorder=1)
         ax.annotate(r"$\pi_0 = 1/N$", xy=(1.0 / N, 0.97),
                     xycoords=ax.get_xaxis_transform(), rotation=90,
-                    ha="right", va="top", fontsize=6.4, color=NULL_ACCENT)
+                    ha="right", va="top", fontsize=7.5, color=NULL_ACCENT)
         blind = float(end[(end.s == 0) & (end.pi == 0)].log10_n_star.iloc[0])
         corner_note(ax, "mode-blind ($\\pi_0=0$):\n"
                         rf"$n^\star \approx 10^{{{blind:.0f}}}$",
-                    xy=(0.97, 0.97), ha="right", va="top")
+                    xy=(0.97, 0.97), ha="right", va="top", fontsize=7.5)
         ax.set_xscale("log")
         ax.set_yscale("log")
         ax.set_xlabel(r"low-visibility schedule mass $\pi_s(\mu)$")
         ax.set_ylabel(r"$n^\star$ (masked examples)")
-        ax.legend(loc="lower left", ncol=2, columnspacing=0.9, fontsize=6.8)
+        ax.legend(loc="lower left", ncol=2, columnspacing=0.9, fontsize=8.0)
 
     def draw_b(ax: Axes) -> None:
         """Why (a) has slope -1: the signal is linear in pi, the noise is not."""
@@ -1460,9 +1497,9 @@ def figure_A9(art: dict, out_dir: Path, png: bool = False) -> None:
         ax.set_yscale("log")
         ax.set_xlabel(r"full-mask schedule mass $\pi_0$")
         ax.set_ylabel("nats per example")
-        ax.legend(loc="upper left", fontsize=6.8)
+        ax.legend(loc="upper left", fontsize=8.0)
         corner_note(ax, note + rf",  $s=0$,  $\lambda={lam_end:g}$",
-                    xy=(0.97, 0.03), ha="right", va="bottom")
+                    xy=(0.97, 0.03), ha="right", va="bottom", fontsize=7.5)
 
     def draw_c(ax: Axes) -> None:
         """The same cost as a function of how small an error must be resolved."""
@@ -1480,9 +1517,9 @@ def figure_A9(art: dict, out_dir: Path, png: bool = False) -> None:
         ax.set_yscale("log")
         ax.set_xlabel(r"mode-weight error $|\lambda - w|$")
         ax.set_ylabel(r"$n^\star$ (masked examples)")
-        ax.legend(loc="lower left", ncol=2, columnspacing=0.9, fontsize=6.8)
+        ax.legend(loc="lower left", ncol=2, columnspacing=0.9, fontsize=8.0)
         corner_note(ax, note + rf",  $\pi = 10^{{{math.log10(pi_c):.0f}}}$",
-                    xy=(0.97, 0.97), ha="right", va="top")
+                    xy=(0.97, 0.97), ha="right", va="top", fontsize=7.5)
 
     def draw_d(ax: Axes) -> None:
         """The raw loss a single example costs, by mask size.
@@ -1546,14 +1583,222 @@ def figure_A9(art: dict, out_dir: Path, png: bool = False) -> None:
     panels = [
         # detection cost (a-c), then raw-loss cost (d-e).  All one size, so the
         # composed 2x3 is a contact sheet rather than a layout prescription.
-        Panel("a", "examples needed to detect the discrepancy", draw_a, A8_PANEL),
+        Panel("a", "examples needed to detect the discrepancy", draw_a, A8_PANEL, M_TITLE_SIZE),
         Panel("b", "signal grows in $\\pi_0$, noise only in $\\sqrt{\\pi_0}$",
-              draw_b, A8_PANEL),
-        Panel("c", "cost of resolving a smaller mode-weight error", draw_c, A8_PANEL),
+              draw_b, A8_PANEL, M_TITLE_SIZE),
+        Panel("c", "cost of resolving a smaller mode-weight error", draw_c, A8_PANEL, M_TITLE_SIZE),
         Panel("d", "raw loss per example, by mask size", draw_d, A8_PANEL),
         Panel("e", "variance of the raw per-example loss", draw_e, A8_PANEL),
     ]
     render("A9", panels, _grid(2, 3), (3 * A8_PANEL[0], 2 * A8_PANEL[1]),
+           out_dir, png, tight_kw={})
+
+
+# ==========================================================================
+# A10: E5 -- optimisation sanity check
+# ==========================================================================
+
+#: pi is ordered, so E5's schedules take a sequential ramp rather than four
+#: categorical slots.  Anchored on the paper's CAT[0] violet and run out through
+#: blue and teal to a light green, so it reads as part of the same palette as
+#: every other figure.  Adjacent-pair CVD dE 11.9 (deutan), and every step
+#: clears the blind red comfortably (worst dE 8.0 deutan, 29.6 normal vision).
+#: Two residuals, both relieved by the legend and the per-series markers: the
+#: teal-to-green adjacency is dE 14.9 against a floor of 15, and the lightest
+#: step is below 3:1 on white.  Green is unavoidable -- with blind on red, any
+#: warm fourth hue collides with it outright (dE 13.7).
+E5_PI_RAMP: tuple[str, ...] = ("#4a3aa7", "#2077b0", "#12a08c", "#8fc740")
+
+
+def figure_A10(art: dict, out_dir: Path, png: bool = False) -> None:
+    """E5: training curves, mode-weight recovery, and final error vs pi_0."""
+    training = art["training"]
+    if training is None or training.empty:
+        raise ValueError("no E5 training data")
+
+    w_true = float(training["w"].iloc[0])
+
+    # The blind schedule is a different kind of object from the rest -- it is
+    # the mechanism-absent control -- so it takes the palette red and a dashed
+    # stroke, and is excluded from the ramp the others share.  Those others
+    # differ only in pi, an *ordered* quantity, so they take the one-hue N ramp
+    # (dark = least mass) rather than categorical slots that would imply four
+    # unrelated conditions.  Amber is deliberately absent: with blind on red,
+    # every warm fourth hue collided with it (normal-vision dE 13.7).
+    pi_of = training.groupby("schedule")["pi"].first().to_dict()
+    blind_names = sorted(s for s in pi_of if pi_of[s] <= 0)
+    informative = sorted((s for s in pi_of if pi_of[s] > 0), key=lambda s: pi_of[s])
+    sched_order = blind_names + informative
+
+    sched_colors: dict[str, str] = {}
+    sched_markers: dict[str, str] = {}
+    sched_styles: dict[str, object] = {}
+    for s in blind_names:
+        sched_colors[s] = CAT[1]
+        sched_markers[s] = "x"
+        sched_styles[s] = (0, (5, 2))
+    for i, s in enumerate(informative):
+        sched_colors[s] = E5_PI_RAMP[min(i, len(E5_PI_RAMP) - 1)]
+        sched_markers[s] = MARKERS[i % len(MARKERS)]
+        sched_styles[s] = (0, ())
+
+    def draw_a(ax: Axes) -> None:
+        """(a) Validation loss vs step, against each schedule's Bayes floor.
+
+        On a linear axis this panel is worse than useless: four of the five
+        curves pile onto zero, and the one that does not (``pi=1e-1``, at
+        $0.069$) looks like the worst fit when it is in fact the *irreducible*
+        loss of that schedule.  A fraction ``pi`` of its examples are fully
+        masked, and a fully masked example carries $H(w)=\\log 2$ nats that no
+        model can remove, so the floor is ``pi log 2`` -- which the measured
+        curves reach to within $5\\%$.  Plotting on a log axis with those floors
+        drawn makes the panel say what it should: every run converged, and the
+        level differences are schedule structure, not fit quality.
+        """
+        for sched in sched_order:
+            sub = training[training["schedule"] == sched]
+            seeds = sub["seed"].unique()
+            for seed in seeds:
+                run = sub[sub["seed"] == seed].sort_values("step")
+                ax.plot(run["step"], run["val_loss"], color=sched_colors[sched],
+                        ls=sched_styles[sched],
+                        alpha=0.18 if len(seeds) > 1 else 1.0, lw=0.7)
+            mean = sub.groupby("step")["val_loss"].mean().reset_index()
+            ax.plot(mean["step"], mean["val_loss"], color=sched_colors[sched],
+                    ls=sched_styles[sched], lw=1.5, label=sched)
+            floor = float(sub["pi"].iloc[0]) * math.log(2.0)
+            if floor > 0:
+                ax.axhline(floor, color=sched_colors[sched], lw=0.7,
+                           ls=(0, (1, 2)), alpha=0.9, zorder=0)
+        ax.set_yscale("log")
+        ax.set_xlabel("training step")
+        ax.set_ylabel("validation loss (nats)")
+        corner_note(ax, r"dotted: Bayes floor $\pi_0\log 2$",
+                    xy=(0.97, 0.03), ha="right", va="bottom")
+        ax.legend(fontsize=6.5, loc="upper right", frameon=True,
+                  framealpha=0.88, edgecolor="none", facecolor=SURFACE)
+
+    def draw_b(ax: Axes) -> None:
+        r"""(b) Implied mode weight $\hat w$ vs step.
+
+        A seed-mean is drawn only where the seeds agree.  Under the blind
+        schedule they do not: each run collapses onto one mode or the other,
+        so the five endpoints straddle the range and their mean sits at a
+        value no single run visits.  Averaging there would manufacture a
+        smooth curve out of a coin flip, so the blind runs are shown
+        individually at full opacity instead.
+        """
+        spread_tol = 0.10
+        for sched in sched_order:
+            sub = training[training["schedule"] == sched]
+            seeds = sub["seed"].unique()
+            final = sub[sub["step"] == sub["step"].max()]["w_hat"]
+            agree = len(seeds) < 2 or (float(final.max()) - float(final.min())) < spread_tol
+            for seed in seeds:
+                run = sub[sub["seed"] == seed].sort_values("step")
+                ax.plot(run["step"], run["w_hat"], color=sched_colors[sched],
+                        ls=sched_styles[sched],
+                        alpha=0.25 if agree else 0.85,
+                        lw=0.7 if agree else 1.0,
+                        label=sched if (not agree and seed == seeds[0]) else None)
+            if agree:
+                mean = sub.groupby("step")["w_hat"].mean().reset_index()
+                ax.plot(mean["step"], mean["w_hat"], color=sched_colors[sched],
+                        ls=sched_styles[sched], lw=1.5, label=sched)
+        ax.axhline(w_true, color=MUTED, lw=0.8, ls="--", zorder=0)
+        # every schedule converges onto w, so this label always sits under a
+        # bundle of curves; it needs its own background to stay readable
+        ax.annotate(f"$w={w_true:g}$", xy=(0.985, w_true),
+                    xycoords=("axes fraction", "data"), xytext=(0, 3),
+                    textcoords="offset points", fontsize=6.5, color=SECONDARY,
+                    ha="right", va="bottom", zorder=6,
+                    bbox=dict(boxstyle="round,pad=0.15", fc=SURFACE,
+                              ec="none", alpha=0.9))
+        ax.set_xlabel("training step")
+        ax.set_ylabel(r"implied $\hat{w}$")
+        ax.set_ylim(-0.05, 1.05)
+        ax.legend(fontsize=6.5, loc="upper right", frameon=True,
+                  framealpha=0.88, edgecolor="none", facecolor=SURFACE)
+
+    def draw_c(ax: Axes) -> None:
+        """(c) Final |w_hat - w| vs pi_0."""
+        # get the final w_hat for each (schedule, seed)
+        last_step = training.groupby(["schedule", "seed"])["step"].max().reset_index()
+        finals = training.merge(last_step, on=["schedule", "seed", "step"])
+
+        pi_vals = []
+        errors = []
+        err_sds = []
+        colors = []
+        markers_list = []
+        labels = []
+
+        for sched in sched_order:
+            sub = finals[finals["schedule"] == sched]
+            pi = float(sub["pi"].iloc[0])
+            w_hats = sub["w_hat"].values
+            err = np.mean(np.abs(w_hats - w_true))
+            # sample sd over seeds, not population sd: n=5
+            sd = float(np.std(np.abs(w_hats - w_true), ddof=1)) if len(w_hats) > 1 else 0.0
+            if pi > 0:
+                pi_vals.append(pi)
+                errors.append(err)
+                err_sds.append(sd)
+                colors.append(sched_colors[sched])
+                markers_list.append(sched_markers[sched])
+                labels.append(sched)
+
+        if pi_vals:
+            # The lower cap must stay strictly positive: at pi=1e-1 the sd
+            # exceeds the mean, and a log axis silently clips a non-positive
+            # lower bound down to the bottom spine -- which reads as an
+            # enormous uncertainty rather than as a bar that ran off scale.
+            lower = [min(s, e * 0.9) for e, s in zip(errors, err_sds)]
+            for p, e, lo, s, c, mk, lab in zip(
+                pi_vals, errors, lower, err_sds, colors, markers_list, labels
+            ):
+                ax.errorbar(p, e, yerr=[[lo], [s]], fmt=mk, color=c,
+                            markersize=5, capsize=3, lw=1.2, label=lab)
+
+            pis = np.array(sorted(pi_vals))
+            if len(pis) >= 2:
+                order = np.argsort(pi_vals)
+                errs = np.asarray(errors)[order]
+                fitted = float(np.polyfit(np.log10(pis), np.log10(errs), 1)[0])
+                ref_err = errors[pi_vals.index(max(pi_vals))]
+                slope_line = ref_err * (pis / max(pi_vals)) ** (-0.5)
+                ax.plot(pis, slope_line, color=INK, ls=(0, (4, 2)), lw=0.9,
+                        alpha=0.6, zorder=1,
+                        label=rf"$-1/2$ (fitted ${fitted:.2f}$)")
+
+        # The blind schedule sits at pi_0 = 0 and cannot be placed on a log
+        # axis, but it is the comparison the panel exists to make -- so it is
+        # drawn as a reference level rather than exiled to a corner note.
+        blind = finals[finals["schedule"] == "blind"]
+        if not blind.empty:
+            blind_err = float(np.mean(np.abs(blind["w_hat"].values - w_true)))
+            blind_col = sched_colors.get(blind["schedule"].iloc[0], CAT[1])
+            ax.axhline(blind_err, color=blind_col, lw=1.2, ls=(0, (5, 2)),
+                       zorder=1)
+            ax.annotate(rf"blind ($\pi_0=0$): ${blind_err:.2f}$",
+                        xy=(0.03, blind_err), xycoords=("axes fraction", "data"),
+                        xytext=(0, 3), textcoords="offset points",
+                        fontsize=6.4, color=blind_col, ha="left", va="bottom")
+
+        if pi_vals:
+            ax.set_xscale("log")
+            ax.set_yscale("log")
+            ax.set_xlabel(r"low-visibility mass $\pi_0(\mu)$")
+            ax.set_ylabel(r"$|\hat{w} - w|$")
+            ax.legend(fontsize=6.5, loc="lower left", frameon=True,
+                      framealpha=0.88, edgecolor="none", facecolor=SURFACE)
+
+    panels = [
+        Panel("a", "training loss", draw_a, A8_PANEL, M_TITLE_SIZE),
+        Panel("b", "mode-weight recovery", draw_b, A8_PANEL, M_TITLE_SIZE),
+        Panel("c", r"final $|\hat{w} - w|$ vs.\ $\pi_0$", draw_c, A8_PANEL, M_TITLE_SIZE),
+    ]
+    render("A10", panels, _grid(1, 3), (3 * A8_PANEL[0], A8_PANEL[1]),
            out_dir, png, tight_kw={})
 
 
@@ -1581,6 +1826,7 @@ def make_all_figures(results_dir: Path | None = None, out_dir: Path | None = Non
         "A7": lambda: figure_A7(art, out_dir, png),
         "A8": lambda: figure_A8(art, out_dir, png),
         "A9": lambda: figure_A9(art, out_dir, png),
+        "A10": lambda: figure_A10(art, out_dir, png),
     }
     for name, fn in todo.items():
         if only and name not in only:

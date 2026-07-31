@@ -1,6 +1,4 @@
 documents
-figures
-results
 .pytest_cache
 .cache
 logs

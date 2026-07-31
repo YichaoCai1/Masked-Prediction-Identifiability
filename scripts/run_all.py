@@ -66,6 +66,16 @@ def build_parser() -> argparse.ArgumentParser:
                    help="windows drawn per side, per split, per |V|")
     p.add_argument("--bootstrap", type=int, default=1000)
     p.add_argument("--calibration", default="isotonic", choices=["isotonic", "platt"])
+
+    p.add_argument("--e5", action="store_true",
+                   help="also run E5 (optimisation sanity check on Law P)")
+    p.add_argument("--e5-seeds", type=int, default=5,
+                   help="independent seeds per schedule (E5)")
+    p.add_argument("--e5-steps", type=int, default=50000,
+                   help="training steps per run (E5)")
+    p.add_argument("--e5-device", default=None,
+                   help="E5 torch device, e.g. cpu or cuda (default: cpu, "
+                        "which benchmarks faster than cuda at this model size)")
     return p
 
 
@@ -123,6 +133,17 @@ def main(argv=None) -> int:
             n_windows=args.n_windows,
             n_bootstrap=args.bootstrap,
             calibration=args.calibration,
+            results_dir=results_dir,
+        )
+    if args.e5:
+        print("E5 -- optimisation sanity check (Law P, mask schedules)")
+        from mpi.e5 import run_e5
+
+        run_e5(
+            cfg,
+            n_seeds=args.e5_seeds,
+            n_steps=args.e5_steps,
+            device=args.e5_device,
             results_dir=results_dir,
         )
 

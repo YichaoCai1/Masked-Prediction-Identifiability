@@ -11,5 +11,8 @@ scikit-learn>=1.3
 datasets>=2.14
 transformers>=4.30
 
+# E5 (optimisation sanity check; CPU-only, no GPU needed)
+torch>=2.0
+
 # Testing
 pytest>=7.0
