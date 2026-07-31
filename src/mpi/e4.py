@@ -38,8 +38,8 @@ at the joint entropy by construction (``H(X_K | X_V) = H(X)`` at ``m = 0``).
 Its schedule-induced variance contribution ``pi (1-pi) (H_s - H_base)^2`` is
 the "high-variance term" of Sec. 5.2.
 
-E4 is an addition to ``documents/experiment-spec.md``, not part of it, and it
-touches nothing E1/E2 own: it defines its own grids here rather than extending
+E4 was added after E1/E2 were frozen, and it touches nothing they own: it
+defines its own grids here rather than extending
 :class:`~mpi.config.RunConfig`, so re-running E1/E2 reproduces their existing
 artifacts byte for byte.
 

@@ -1,7 +1,5 @@
 """E3 -- Residual mode MMSE on real corpora.
 
-Implements ``documents/E3-real-corpora-spec.md``.
-
 Both structural assumptions of the paper are statements about
 ``mmse_p(Z | X_V)`` -- a property of the **data law**, not of any trained model.
 E1/E2 verify them on a synthetic law where every constant is predicted.  E3's

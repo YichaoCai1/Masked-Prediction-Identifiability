@@ -13,8 +13,8 @@ when editing one.
 **No text that LaTeX should own is drawn into a PDF.**  There are no banner
 titles; the ``(a)`` / ``(b)`` panel titles appear only on the composed contact
 sheet, never on a standalone panel, whose ``\subcaption`` supplies them; and
-the narrative lives in ``documents/experiment_interpretation.md``, where it can
-be lifted into paper text.  What panels *do* keep is run context -- ``N``,
+the narrative lives in the paper text and in the README, not in the artwork.
+What panels *do* keep is run context -- ``N``,
 ``m_base``, the witness -- as muted in-axes corner notes, since that is data
 provenance rather than caption prose.
 
@@ -1400,8 +1400,8 @@ def figure_A8(art: dict, out_dir: Path, png: bool = False) -> None:
         # diagnostics that license it (one per estimator arm).  All panels are
         # emitted at one size so they can be re-laid-out freely as subfigures;
         # the composed 2x3 is a contact sheet, not a layout prescription.
-        # Corpora / licences / protocol are not a figure -- they live in
-        # documents/experiment_interpretation.md.
+        # Corpora / licences / protocol are not a figure -- they live in the
+        # README and the paper's appendix.
         Panel("a", "residual mode MMSE on real corpora", draw_b, A8_PANEL, M_TITLE_SIZE),
         Panel("b", "functional form of the decay", draw_f, A8_PANEL, M_TITLE_SIZE),
         Panel("c", "model class: does a richer classifier change the law?",

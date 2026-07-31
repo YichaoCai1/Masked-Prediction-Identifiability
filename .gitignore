@@ -1,5 +1,14 @@
-documents
-.pytest_cache
-.cache
-logs
-*/__pycache__
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Paper sources (not part of the code release)
+documents/
+
+# Corpus cache for experiment 4 (~300 MB, rebuilt on demand)
+.cache/
+
+# Run logs and local archives
+logs/
+*.zip

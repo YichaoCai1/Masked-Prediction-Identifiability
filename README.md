@@ -163,16 +163,27 @@ access. Experiment 4 can be run fully offline against a synthetic fixture
 
 ## Quickstart
 
+**`results/` and `figures/` are committed**, so nothing has to be re-run to use
+this repository. Every figure in the paper rebuilds from the shipped tables in
+about 20 seconds:
+
+```bash
+pip install -r requirements.txt
+python scripts/make_figures.py     # figure M, figure M_E3, table M, A1-A10
+```
+
+That writes 12 composed figures and 38 standalone panels into `figures/`, plus
+Table M as `figures/table_M.csv` and `figures/table_M.tex`. Only `numpy`,
+`pandas`, `pyarrow` and `matplotlib` are needed for this path.
+
+To re-run the computation instead of trusting the artifacts:
+
 ```bash
 python -m pytest tests -q          # 177 tests, ~10 s  -- run before any figure
 python scripts/run_all.py          # experiments 1, 2, 5: exact enumeration, ~25 s
 python scripts/audit_numerics.py   # mpmath cross-check at 50 digits, ~3 s
-python scripts/make_figures.py     # figure M, figure M_E3, table M, A1-A10
+python scripts/make_figures.py
 ```
-
-Artifacts land in `results/` as Parquet; figures in `figures/` as PDF, both
-composed (`figure_M.pdf`) and panel by panel (`figure_M/panel_a.pdf`, …);
-Table M in `figures/table_M.csv` and `figures/table_M.tex`.
 
 To reproduce everything as committed, including the trained and real-corpus
 stages:
@@ -194,6 +205,26 @@ about a minute (the trend survives; the seed spread does not tighten).
 Without network access, skip the `--e3` line. Figures degrade gracefully: any
 figure whose tables are missing prints a warning and is skipped; everything else
 is unaffected.
+
+### What "reproduced" means here
+
+Re-running the exact stages on a different OS reproduces every numeric column of
+the committed tables to **float64 round-off** — the largest relative deviation
+observed is $1.1\times10^{-12}$, on `profiles.logD`.
+
+One column is expected to differ and is not an error. At $w = 1/2$ the
+discrepancy profile is symmetric under $\lambda \mapsto 1-\lambda$, so the
+maximiser is an exact two-way tie ($\lambda^\star = 0.25$ vs $0.75$, whose
+$\log\mathfrak{D}$ differ by $9\times10^{-16}$ — one ulp). Which one `argmax`
+returns is decided by round-off and flips between platforms in 43 of 392 rows of
+`summary.parquet`. Everything reported is invariant under the flip:
+$\log\Delta$, $\rho$, and $\mathrm{kl}(w\|\lambda^\star)$ are bit-identical at
+the two tied values.
+
+PDFs are not byte-reproducible either — matplotlib stamps a `/CreationDate` —
+but the figure inventory and content are. The shipped tables carry
+`git_hash = nogit` because they predate this repository; re-runs stamp the real
+commit.
 
 ---
 
