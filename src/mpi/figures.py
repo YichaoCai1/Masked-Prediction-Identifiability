@@ -1309,7 +1309,7 @@ def figure_A8(art: dict, out_dir: Path, png: bool = False) -> None:
         ax.set_xticklabels([str(int(v)) for v in ref.V])
         ax.set_yticks(range(0, int(np.nanmax(g_all.eff_order)) + 2))
         ax.set_xlabel(r"$|V|$")
-        ax.set_ylabel("realised backoff order")
+        ax.set_ylabel("realized backoff order")
         ax.legend(fontsize=6.2, loc="upper left")
         # one line, not two: at this panel width the longer form reaches across
         # into the legend
@@ -1407,7 +1407,7 @@ def figure_A8(art: dict, out_dir: Path, png: bool = False) -> None:
         Panel("c", "model class: does a richer classifier change the law?",
               draw_e, A8_NARROW, M_TITLE_SIZE),
         Panel("d", "slack in the upper bound, and its source", draw_a, A8_NARROW),
-        Panel("e", "realised backoff order — posterior arm", draw_c, A8_NARROW),
+        Panel("e", "realized backoff order — posterior arm", draw_c, A8_NARROW),
     ]
     render("A8", panels, _grid(2, 3), (3 * A8_PANEL[0], 2 * A8_PANEL[1]),
            out_dir, png, tight_kw={})
