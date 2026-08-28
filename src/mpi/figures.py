@@ -1382,7 +1382,8 @@ def figure_A8(art: dict, out_dir: Path, png: bool = False) -> None:
                    alpha=0.85, label=model.replace("_", " "))
         ax.set_xticks(x)
         ax.set_xticklabels(
-            [E3_LABELS.get(c, c) + "\n" + fs.replace("_", "+")
+            [("Ge. vs Eng." if c == "bilingual" else E3_LABELS.get(c, c))
+             + "\n" + fs.replace("_", "+")
              for (c, fs), _ in rows], fontsize=7.0)
         ax.set_ylim(0.0, 1.18)
         ax.set_ylabel(r"fit $R^2$")

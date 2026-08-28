@@ -1,4 +1,4 @@
-"""Experiments for *On the Identifiability of Masked Prediction:
+"""Experiments for *An Identifiability Theory of Masked Prediction:
 Mode Blindness and Mask Schedules*.
 
 Module names predate the paper's final ordering and are kept so that the
