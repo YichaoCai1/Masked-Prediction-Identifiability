@@ -32,7 +32,7 @@ def main(argv=None) -> int:
     p.add_argument("--results-dir", default=str(RESULTS_DIR))
     p.add_argument("--out-dir", default=str(FIGURES_DIR))
     p.add_argument("--only", nargs="*", default=None,
-                   help="subset of {M, A1..A8}")
+                   help="subset of {M, M_E3, A1..A10}")
     p.add_argument("--png", action="store_true",
                    help="also emit PNG previews alongside the PDFs")
     args = p.parse_args(argv)

@@ -1,7 +1,7 @@
 """Figures.
 
-One main-text figure (M, 2x2) plus appendix figures A1-A8, all regenerated
-from the frozen artifacts in ``results/`` -- no figure recomputes anything.
+Main-text figures M and M_E3 plus appendix figures A1-A10, all regenerated from
+the frozen artifacts in ``results/`` -- no figure recomputes anything.
 
 Every figure is emitted twice: as a composed multi-panel PDF
 ``figures/figure_<name>.pdf``, and panel by panel into

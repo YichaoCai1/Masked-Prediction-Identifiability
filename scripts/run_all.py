@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 """Run the experiments and write the result tables into ``results/``.
 
-    python scripts/run_all.py                 # E1 + E2 (exact, no network)
-    python scripts/run_all.py --e3            # also E3 on the offline corpus
+    python scripts/run_all.py                 # E1 + E2 + E4 (exact, no network)
+    python scripts/run_all.py --e3            # also E3 on real corpora (network)
+    python scripts/run_all.py --skip-e1 --skip-e2 --skip-e4 --e3 --corpora markov --tokenizer bytes  # E3 offline fixture
     python scripts/run_all.py --quick         # smaller grid, for a smoke test
 
 See the README for the full option list.
