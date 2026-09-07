@@ -109,7 +109,7 @@ The trainable family is
 $$
 q_\lambda=\lambda p^+ + (1-\lambda)p^-,
 \qquad
-\lambda=\operatorname{sigmoid}(a).
+\lambda=\mathrm{sigmoid}(a).
 $$
 
 Only the scalar logit `a` is optimized. Every masked conditional is induced by the same joint distribution $q_\lambda$, and the primary objective comparison uses exact population excess risk.
