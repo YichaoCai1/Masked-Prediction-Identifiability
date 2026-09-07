@@ -1,7 +1,8 @@
 """Fitting utilities: window OLS, curvature fit, recovery-radius bisection.
 
-There is no sampling noise anywhere in E1/E2, so every "uncertainty" reported
-here is a *numerical* CI: the spread of an estimate under fit-window shifts,
+There is no sampling noise in the exact synthetic studies, so every
+"uncertainty" reported here is a *numerical* CI: the spread of an estimate
+under fit-window shifts,
 branch-threshold changes, and float64-vs-mpmath recomputation
 (spec section 3.1).
 """

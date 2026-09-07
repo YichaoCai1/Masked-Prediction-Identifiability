@@ -37,9 +37,13 @@ from mpi.core import (
     log_kl_stable,
     visible_law,
 )
-from mpi.e1 import run_e1
-from mpi.e2 import run_e2
-from mpi.e4 import log_second_moment, raw_loss_moments, sampling_cost
+from mpi.low_visibility_intervention import run_low_visibility_intervention
+from mpi.low_visibility_sampling_cost import (
+    log_second_moment,
+    raw_loss_moments,
+    sampling_cost,
+)
+from mpi.mode_blindness import run_mode_blindness
 from mpi.estimands import (
     curvature_exact,
     log_D,
@@ -447,10 +451,12 @@ def test_T12c_fitted_constants_respect_the_proposition(tmp_path):
     and that the measured rate lands on ``rate*`` rather than on ``L0 theta``.
     """
     cfg = RunConfig(laws=("product-0.6", "product-0.8"), N_grid=(127, 255), w_grid=(0.5,))
-    e1 = run_e1(cfg, results_dir=tmp_path, verbose=False)
-    e2 = run_e2(cfg, results_dir=tmp_path, verbose=False)
+    blindness = run_mode_blindness(cfg, results_dir=tmp_path, verbose=False)
+    intervention = run_low_visibility_intervention(
+        cfg, results_dir=tmp_path, verbose=False
+    )
 
-    fits = e1["fits"]
+    fits = blindness["fits"]
     fits = fits[(fits.xvar == "m")]
     assert len(fits) > 0
     for _, row in fits.iterrows():
@@ -462,7 +468,7 @@ def test_T12c_fitted_constants_respect_the_proposition(tmp_path):
         assert abs(row.rate_hat - pc.rate_star) / pc.rate_star < 0.05
         assert abs(row.rate_hat - pc.L0 * row.param) / pc.rate_star > 0.5
 
-    us = e2["uscale"]
+    us = intervention["uscale"]
     assert us.u0_ok.dropna().all()
     assert us.L_ok.dropna().all()
     assert us.assumption_holds.dropna().all()
@@ -500,14 +506,14 @@ def test_brute_force_agreement(spec, w):
 def test_full_run_matrix(tmp_path):
     """The whole spec run matrix, end to end (slow: enable with ``-m slow``)."""
     cfg = RunConfig()
-    run_e1(cfg, results_dir=tmp_path, verbose=False)
-    run_e2(cfg, results_dir=tmp_path, verbose=False)
+    run_mode_blindness(cfg, results_dir=tmp_path, verbose=False)
+    run_low_visibility_intervention(cfg, results_dir=tmp_path, verbose=False)
 
 
 # ==========================================================================
-# T13-T15 -- E4, the sampling cost of low-visibility mass
+# T13-T15 -- sampling cost of low-visibility mass
 #
-# These are additions to the specification's T1-T12, not part of it: E4 was
+# These are additions to the specification's T1-T12, not part of it: this stage was
 # added to give Sec. 5.2 ("The cost of the full mask") something measured to
 # stand on.  The pattern is the same -- an exact claim checked against
 # explicit enumeration, plus the scaling laws the panels assert.
@@ -542,7 +548,7 @@ def test_T13_second_moment_vs_brute_force(spec, w):
 def test_T14_raw_loss_vs_brute_force(spec, w):
     """``H(X_K | X_V)`` and its variance vs explicit enumeration, ``N = 9``.
 
-    Also pins the identity that makes panel A9(d) meaningful: at ``m = 0`` the
+    Also pins the identity used by the raw-loss-by-mask-size panel: at ``m = 0`` the
     raw loss *is* the joint entropy, so the full-mask channel prices in the
     whole law rather than a conditional slice of it.
     """
@@ -561,7 +567,7 @@ def test_T14_raw_loss_vs_brute_force(spec, w):
 @pytest.mark.parametrize("spec", PRODUCT_LAWS)
 @pytest.mark.parametrize("w", W_TEST)
 def test_T15_detection_cost_scaling(spec, w):
-    """``n_star ~ 1/pi`` and ``n_star ~ (lambda-w)^{-2}``, the two A9 slopes.
+    """``n_star ~ 1/pi`` and ``n_star ~ (lambda-w)^{-2}``, the predicted slopes.
 
     Both are exact consequences of the moment structure -- the signal is linear
     in the schedule mass while the noise is not -- so they are asserted to four

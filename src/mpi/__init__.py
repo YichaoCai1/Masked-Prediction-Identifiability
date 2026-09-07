@@ -1,15 +1,13 @@
 """Experiments for *An Identifiability Theory of Masked Prediction:
 Mode Blindness and Mask Schedules*.
 
-Module names predate the paper's final ordering and are kept so that the
-committed artifacts and their ``config_hash`` values stay valid.  The mapping
-is:
+Study modules are named for the scientific question they answer:
 
-``e1``         paper experiment 1 -- mode blindness
-``e2``         paper experiment 2 -- low-visibility intervention
-``e5``         paper experiment 3 -- does the prediction survive SGD?  [torch]
-``realdata``   paper experiment 4 -- residual mode MMSE on labelled corpora
-``e4``         paper experiment 5 -- what the intervention costs
+``mode_blindness``                 exact blindness and sensitivity scaling
+``low_visibility_intervention``    curvature and recovery under mask schedules
+``mode_weight_optimization``       direct scalar optimization inside q_lambda
+``corpus_mode_uncertainty``        residual mode MMSE on labelled corpora
+``low_visibility_sampling_cost``   finite-sample cost of the intervention
 
 Supporting modules:
 
@@ -22,7 +20,7 @@ Supporting modules:
 ``config``     grids, run matrix, closed-form predicted constants
 ``tableio``    Parquet/CSV writing with provenance stamping
 ``style``      colour and mark decisions for every figure
-``figures``    main figure M, table M, appendix figures A1-A10
+``figures``    semantic figure/table builders from frozen result artifacts
 """
 
 __version__ = "1.0.0"

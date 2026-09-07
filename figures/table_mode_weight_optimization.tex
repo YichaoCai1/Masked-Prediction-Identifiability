@@ -1,0 +1,63 @@
+% Direct q_lambda mode-weight optimization.
+\begin{tabular}{lllrrrrrrrrrrrrrr}
+\toprule
+method & schedule & role & s & pi & lambda_init & H & inverse_H & predicted_half_time & n_runs & n_events & n_censored & median_t_half & median_censored & t_half_ci_low & t_half_ci_high & median_over_predicted \\
+\midrule
+population_gd & s=0,pi=0.03 & full_mask_control & 0 & 0.03 & 0.1 & 0.0075 & 133.3 & 924.2 & 1 & 1 & 0 & 1489 & False & 1489 & 1489 & 1.611 \\
+population_gd & s=0,pi=0.03 & full_mask_control & 0 & 0.03 & 0.3 & 0.0075 & 133.3 & 924.2 & 1 & 1 & 0 & 1013 & False & 1013 & 1013 & 1.096 \\
+population_gd & s=0,pi=0.03 & full_mask_control & 0 & 0.03 & 0.4 & 0.0075 & 133.3 & 924.2 & 1 & 1 & 0 & 945 & False & 945 & 945 & 1.023 \\
+population_gd & s=0,pi=0.03 & full_mask_control & 0 & 0.03 & 0.6 & 0.0075 & 133.3 & 924.2 & 1 & 1 & 0 & 945 & False & 945 & 945 & 1.023 \\
+population_gd & s=0,pi=0.03 & full_mask_control & 0 & 0.03 & 0.7 & 0.0075 & 133.3 & 924.2 & 1 & 1 & 0 & 1013 & False & 1013 & 1013 & 1.096 \\
+population_gd & s=0,pi=0.03 & full_mask_control & 0 & 0.03 & 0.9 & 0.0075 & 133.3 & 924.2 & 1 & 1 & 0 & 1489 & False & 1489 & 1489 & 1.611 \\
+population_gd & blind & blind & 1 & 0 & 0.1 & 6.232e-09 & 1.605e+08 & 1.112e+09 & 1 & 0 & 1 & inf & True & NaN & inf & inf \\
+population_gd & blind & blind & 1 & 0 & 0.3 & 6.232e-09 & 1.605e+08 & 1.112e+09 & 1 & 0 & 1 & inf & True & NaN & inf & inf \\
+population_gd & blind & blind & 1 & 0 & 0.4 & 6.232e-09 & 1.605e+08 & 1.112e+09 & 1 & 0 & 1 & inf & True & NaN & inf & inf \\
+population_gd & blind & blind & 1 & 0 & 0.6 & 6.232e-09 & 1.605e+08 & 1.112e+09 & 1 & 0 & 1 & inf & True & NaN & inf & inf \\
+population_gd & blind & blind & 1 & 0 & 0.7 & 6.232e-09 & 1.605e+08 & 1.112e+09 & 1 & 0 & 1 & inf & True & NaN & inf & inf \\
+population_gd & blind & blind & 1 & 0 & 0.9 & 6.232e-09 & 1.605e+08 & 1.112e+09 & 1 & 0 & 1 & inf & True & NaN & inf & inf \\
+population_gd & s=1,pi=0.001 & primary_low_visibility & 1 & 0.001 & 0.1 & 9.001e-05 & 1.111e+04 & 7.701e+04 & 1 & 1 & 0 & 9.396e+04 & False & 9.396e+04 & 9.396e+04 & 1.22 \\
+population_gd & s=1,pi=0.001 & primary_low_visibility & 1 & 0.001 & 0.3 & 9.001e-05 & 1.111e+04 & 7.701e+04 & 1 & 1 & 0 & 7.968e+04 & False & 7.968e+04 & 7.968e+04 & 1.035 \\
+population_gd & s=1,pi=0.001 & primary_low_visibility & 1 & 0.001 & 0.4 & 9.001e-05 & 1.111e+04 & 7.701e+04 & 1 & 1 & 0 & 7.763e+04 & False & 7.763e+04 & 7.763e+04 & 1.008 \\
+population_gd & s=1,pi=0.001 & primary_low_visibility & 1 & 0.001 & 0.6 & 9.001e-05 & 1.111e+04 & 7.701e+04 & 1 & 1 & 0 & 7.763e+04 & False & 7.763e+04 & 7.763e+04 & 1.008 \\
+population_gd & s=1,pi=0.001 & primary_low_visibility & 1 & 0.001 & 0.7 & 9.001e-05 & 1.111e+04 & 7.701e+04 & 1 & 1 & 0 & 7.968e+04 & False & 7.968e+04 & 7.968e+04 & 1.035 \\
+population_gd & s=1,pi=0.001 & primary_low_visibility & 1 & 0.001 & 0.9 & 9.001e-05 & 1.111e+04 & 7.701e+04 & 1 & 1 & 0 & 9.396e+04 & False & 9.396e+04 & 9.396e+04 & 1.22 \\
+population_gd & s=1,pi=0.003 & primary_low_visibility & 1 & 0.003 & 0.1 & 0.00027 & 3704 & 2.567e+04 & 1 & 1 & 0 & 3.132e+04 & False & 3.132e+04 & 3.132e+04 & 1.22 \\
+population_gd & s=1,pi=0.003 & primary_low_visibility & 1 & 0.003 & 0.3 & 0.00027 & 3704 & 2.567e+04 & 1 & 1 & 0 & 2.656e+04 & False & 2.656e+04 & 2.656e+04 & 1.035 \\
+population_gd & s=1,pi=0.003 & primary_low_visibility & 1 & 0.003 & 0.4 & 0.00027 & 3704 & 2.567e+04 & 1 & 1 & 0 & 2.588e+04 & False & 2.588e+04 & 2.588e+04 & 1.008 \\
+population_gd & s=1,pi=0.003 & primary_low_visibility & 1 & 0.003 & 0.6 & 0.00027 & 3704 & 2.567e+04 & 1 & 1 & 0 & 2.588e+04 & False & 2.588e+04 & 2.588e+04 & 1.008 \\
+population_gd & s=1,pi=0.003 & primary_low_visibility & 1 & 0.003 & 0.7 & 0.00027 & 3704 & 2.567e+04 & 1 & 1 & 0 & 2.656e+04 & False & 2.656e+04 & 2.656e+04 & 1.035 \\
+population_gd & s=1,pi=0.003 & primary_low_visibility & 1 & 0.003 & 0.9 & 0.00027 & 3704 & 2.567e+04 & 1 & 1 & 0 & 3.132e+04 & False & 3.132e+04 & 3.132e+04 & 1.22 \\
+population_gd & s=1,pi=0.03 & primary_low_visibility & 1 & 0.03 & 0.1 & 0.0027 & 370.4 & 2567 & 1 & 1 & 0 & 3132 & False & 3132 & 3132 & 1.22 \\
+population_gd & s=1,pi=0.03 & primary_low_visibility & 1 & 0.03 & 0.3 & 0.0027 & 370.4 & 2567 & 1 & 1 & 0 & 2656 & False & 2656 & 2656 & 1.035 \\
+population_gd & s=1,pi=0.03 & primary_low_visibility & 1 & 0.03 & 0.4 & 0.0027 & 370.4 & 2567 & 1 & 1 & 0 & 2588 & False & 2588 & 2588 & 1.008 \\
+population_gd & s=1,pi=0.03 & primary_low_visibility & 1 & 0.03 & 0.6 & 0.0027 & 370.4 & 2567 & 1 & 1 & 0 & 2588 & False & 2588 & 2588 & 1.008 \\
+population_gd & s=1,pi=0.03 & primary_low_visibility & 1 & 0.03 & 0.7 & 0.0027 & 370.4 & 2567 & 1 & 1 & 0 & 2656 & False & 2656 & 2656 & 1.035 \\
+population_gd & s=1,pi=0.03 & primary_low_visibility & 1 & 0.03 & 0.9 & 0.0027 & 370.4 & 2567 & 1 & 1 & 0 & 3132 & False & 3132 & 3132 & 1.22 \\
+population_gd & s=1,pi=0.1 & primary_low_visibility & 1 & 0.1 & 0.1 & 0.009 & 111.1 & 770.2 & 1 & 1 & 0 & 940 & False & 940 & 940 & 1.221 \\
+population_gd & s=1,pi=0.1 & primary_low_visibility & 1 & 0.1 & 0.3 & 0.009 & 111.1 & 770.2 & 1 & 1 & 0 & 797 & False & 797 & 797 & 1.035 \\
+population_gd & s=1,pi=0.1 & primary_low_visibility & 1 & 0.1 & 0.4 & 0.009 & 111.1 & 770.2 & 1 & 1 & 0 & 776 & False & 776 & 776 & 1.008 \\
+population_gd & s=1,pi=0.1 & primary_low_visibility & 1 & 0.1 & 0.6 & 0.009 & 111.1 & 770.2 & 1 & 1 & 0 & 776 & False & 776 & 776 & 1.008 \\
+population_gd & s=1,pi=0.1 & primary_low_visibility & 1 & 0.1 & 0.7 & 0.009 & 111.1 & 770.2 & 1 & 1 & 0 & 797 & False & 797 & 797 & 1.035 \\
+population_gd & s=1,pi=0.1 & primary_low_visibility & 1 & 0.1 & 0.9 & 0.009 & 111.1 & 770.2 & 1 & 1 & 0 & 940 & False & 940 & 940 & 1.221 \\
+population_gd & s=4,pi=0.03 & s4_robustness & 4 & 0.03 & 0.1 & 0.0004742 & 2109 & 1.462e+04 & 1 & 1 & 0 & 2.06e+04 & False & 2.06e+04 & 2.06e+04 & 1.409 \\
+population_gd & s=4,pi=0.03 & s4_robustness & 4 & 0.03 & 0.3 & 0.0004742 & 2109 & 1.462e+04 & 1 & 1 & 0 & 1.569e+04 & False & 1.569e+04 & 1.569e+04 & 1.073 \\
+population_gd & s=4,pi=0.03 & s4_robustness & 4 & 0.03 & 0.4 & 0.0004742 & 2109 & 1.462e+04 & 1 & 1 & 0 & 1.487e+04 & False & 1.487e+04 & 1.487e+04 & 1.017 \\
+population_gd & s=4,pi=0.03 & s4_robustness & 4 & 0.03 & 0.6 & 0.0004742 & 2109 & 1.462e+04 & 1 & 1 & 0 & 1.487e+04 & False & 1.487e+04 & 1.487e+04 & 1.017 \\
+population_gd & s=4,pi=0.03 & s4_robustness & 4 & 0.03 & 0.7 & 0.0004742 & 2109 & 1.462e+04 & 1 & 1 & 0 & 1.569e+04 & False & 1.569e+04 & 1.569e+04 & 1.073 \\
+population_gd & s=4,pi=0.03 & s4_robustness & 4 & 0.03 & 0.9 & 0.0004742 & 2109 & 1.462e+04 & 1 & 1 & 0 & 2.06e+04 & False & 2.06e+04 & 2.06e+04 & 1.409 \\
+sgd & s=0,pi=0.03 & full_mask_control & 0 & 0.03 & 0.4 & 0.0075 & 133.3 & 924.2 & 5 & 5 & 0 & 1000 & False & 1000 & 1100 & 1.082 \\
+sgd & s=0,pi=0.03 & full_mask_control & 0 & 0.03 & 0.6 & 0.0075 & 133.3 & 924.2 & 5 & 5 & 0 & 1000 & False & 900 & 1000 & 1.082 \\
+sgd & blind & blind & 1 & 0 & 0.4 & 6.232e-09 & 1.605e+08 & 1.112e+09 & 5 & 0 & 5 & inf & True & NaN & inf & inf \\
+sgd & blind & blind & 1 & 0 & 0.6 & 6.232e-09 & 1.605e+08 & 1.112e+09 & 5 & 0 & 5 & inf & True & NaN & inf & inf \\
+sgd & s=1,pi=0.001 & primary_low_visibility & 1 & 0.001 & 0.4 & 9.001e-05 & 1.111e+04 & 7.701e+04 & 5 & 5 & 0 & 8.07e+04 & False & 7.53e+04 & 8.43e+04 & 1.048 \\
+sgd & s=1,pi=0.001 & primary_low_visibility & 1 & 0.001 & 0.6 & 9.001e-05 & 1.111e+04 & 7.701e+04 & 5 & 5 & 0 & 7.36e+04 & False & 7.29e+04 & 8.16e+04 & 0.9557 \\
+sgd & s=1,pi=0.003 & primary_low_visibility & 1 & 0.003 & 0.4 & 0.00027 & 3704 & 2.567e+04 & 5 & 5 & 0 & 2.68e+04 & False & 2.47e+04 & 3.06e+04 & 1.044 \\
+sgd & s=1,pi=0.003 & primary_low_visibility & 1 & 0.003 & 0.6 & 0.00027 & 3704 & 2.567e+04 & 5 & 5 & 0 & 2.51e+04 & False & 2.29e+04 & 2.77e+04 & 0.9777 \\
+sgd & s=1,pi=0.03 & primary_low_visibility & 1 & 0.03 & 0.4 & 0.0027 & 370.4 & 2567 & 5 & 5 & 0 & 2700 & False & 2300 & 3000 & 1.052 \\
+sgd & s=1,pi=0.03 & primary_low_visibility & 1 & 0.03 & 0.6 & 0.0027 & 370.4 & 2567 & 5 & 5 & 0 & 2500 & False & 2400 & 2900 & 0.9738 \\
+sgd & s=1,pi=0.1 & primary_low_visibility & 1 & 0.1 & 0.4 & 0.009 & 111.1 & 770.2 & 5 & 5 & 0 & 900 & False & 800 & 900 & 1.169 \\
+sgd & s=1,pi=0.1 & primary_low_visibility & 1 & 0.1 & 0.6 & 0.009 & 111.1 & 770.2 & 5 & 5 & 0 & 800 & False & 800 & 800 & 1.039 \\
+sgd & s=4,pi=0.03 & s4_robustness & 4 & 0.03 & 0.4 & 0.0004742 & 2109 & 1.462e+04 & 5 & 5 & 0 & 1.48e+04 & False & 1.4e+04 & 1.6e+04 & 1.012 \\
+sgd & s=4,pi=0.03 & s4_robustness & 4 & 0.03 & 0.6 & 0.0004742 & 2109 & 1.462e+04 & 5 & 5 & 0 & 1.5e+04 & False & 1.37e+04 & 1.59e+04 & 1.026 \\
+\bottomrule
+\end{tabular}

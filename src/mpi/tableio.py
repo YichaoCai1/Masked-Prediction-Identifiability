@@ -51,5 +51,5 @@ def read_table(name: str, results_dir: Path | None = None) -> pd.DataFrame:
     if csv.exists():
         return pd.read_csv(csv)
     raise FileNotFoundError(
-        f"no artifact {name!r} in {results_dir}; run `python scripts/run_all.py` first"
+        f"no artifact {name!r} in {results_dir}; run `python scripts/run_studies.py` first"
     )

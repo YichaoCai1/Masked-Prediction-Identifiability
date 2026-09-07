@@ -256,7 +256,7 @@ _DYADIC_M: tuple[int, ...] = (1, 2, 4, 8, 16, 32, 64, 128, 256)
 #: Fixed visible fractions used for the "decay at fixed fraction of N" fit.
 RHO_FRACTIONS: tuple[float, ...] = (0.25, 0.5, 0.75)
 
-#: E2 grids.
+#: Low-visibility intervention grids.
 PI_GRID: tuple[float, ...] = (0.0, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1)
 S_BOOST_GRID: tuple[int, ...] = (0, 1, 2, 4)
 EPS_GRID: tuple[float, ...] = (1e-8, 1e-6, 1e-4, 1e-2)
@@ -347,7 +347,14 @@ class RunConfig:
 def git_hash(default: str = "nogit") -> str:
     try:
         out = subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"],
+            [
+                "git",
+                "-c",
+                f"safe.directory={REPO_ROOT.as_posix()}",
+                "rev-parse",
+                "--short",
+                "HEAD",
+            ],
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,

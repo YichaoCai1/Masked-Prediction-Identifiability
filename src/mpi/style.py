@@ -1,17 +1,12 @@
 """Shared plotting style.
 
-Colour choices are validated, not eyeballed:
+Colour choices use the paper's violet/red visual identity for discrete series:
 
-* ``N`` and ``m`` are *ordered*, so they get one-hue ramps (blue for ``N``,
-  viridis for ``m`` as the spec requires) rather than categorical hues.
-* ``s`` (boost size) and the law comparison are *categorical* with <= 3 levels,
-  so they take the first three slots of a categorical palette whose all-pairs
-  CVD separation was checked with the palette validator
-  (worst pair deutan dE 9.2, normal-vision dE 24.0 on a light surface).
-* The null control and every reference line are achromatic, so "mechanism
-  absent" and "prediction" never compete with a data hue.
-* E3 lives in a different colour family (violet/red) because it is a different
-  kind of claim -- measurement on real data, not exact enumeration.
+* every ordered or categorical sequence starts from the first palette entry,
+  so panels with the same number of series share the same accents;
+* corpus and model identities use those same positions consistently;
+* genuinely continuous color bars use a custom diverging map whose endpoints
+  match the paper's DarkKlein and LinkBurgundy hyperlink colours.
 
 Every series is also distinguished by marker and/or dash pattern, so identity
 never rests on colour alone.
@@ -20,18 +15,32 @@ never rests on colour alone.
 from __future__ import annotations
 
 import matplotlib as mpl
-import numpy as np
 from matplotlib import pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 
 __all__ = [
-    "apply_style", "N_COLORS", "CAT", "INK", "MUTED", "GRID", "SURFACE", "NULL_GREY",
-    "NULL_ACCENT",
-    "E3_COLORS", "E3_LABELS", "E3_MARKERS", "n_color", "m_cmap", "law_style",
+    "apply_style", "CALM_PALETTE", "CONTINUOUS_CMAP", "N_COLORS", "CAT", "INK", "MUTED", "GRID", "SURFACE", "NULL_GREY",
+    "CORPUS_COLORS", "CORPUS_LABELS", "CORPUS_MARKERS", "n_color", "m_cmap", "law_style",
     "annotate_panel", "corner_note", "save",
 ]
 
+# -- fixed colormaps --------------------------------------------------------
+# User-approved paper palette, kept explicit so the mapping cannot drift with
+# plotting-library defaults.  The first two entries exactly match mpiViolet
+# and mpiRed in the main figure; the remaining hues are calm supporting
+# accents chosen to stay distinct from them and from one another.
+CALM_PALETTE = (
+    "#4A3AA7", "#E34948", "#2A7F82", "#C58A32", "#3568A8",
+    "#4F8A61", "#A95878", "#80634E", "#66717E", "#898781",
+)
+CONTINUOUS_CMAP = LinearSegmentedColormap.from_list(
+    "mpi_diverging",
+    ("#122A82", "#4A3AA7", "#F3F1EC", "#E34948", "#8A1538"),
+    N=256,
+)
+
 # -- ink & chrome -----------------------------------------------------------
+
 INK = "#0b0b0b"
 SECONDARY = "#52514e"
 MUTED = "#898781"
@@ -40,27 +49,29 @@ GRID = "#e1e0d9"
 # region shading (axvspan / axhspan / fill_between) is drawn *over* this,
 # so the regions that must stay distinguishable still are.
 SURFACE = "#ffffff"
-#: null control as one series among several (A2), where it must recede
-NULL_GREY = "#b8b6ae"
-#: null control overlaid on the data (M(a)), where it must be unmistakable.
-#: Orange is the CVD-validated complement of the blue N-ramp and appears
-#: nowhere else in that panel; the dotted pattern still reads as "control".
-NULL_ACCENT = "#eb6834"
+#: null control as one series among several, where it must recede
+NULL_GREY = CALM_PALETTE[9]
+# -- categorical slots in canonical order ----------------------------------
+CAT = list(CALM_PALETTE)
 
-# -- categorical slots (harmonised with E3 violet/red/green) ----------------
-CAT = ["#4a3aa7", "#e34948", "#008300", "#d4820e"]
+# -- discrete dimension levels use the same fixed order ---------------------
+N_RAMP = list(CALM_PALETTE)
 
-# -- ordinal violet ramp for N (harmonised with E3 palette) ------------------
-N_RAMP = ["#a99be0", "#7766cc", "#5544b0", "#3a2a80"]
-
-# -- E3 palette: deliberately outside the E1/E2 families --------------------
+# -- corpus identity within the same shared family ---------------------------
 # Colour identifies the *corpus*, marker the *estimator arm*, so the reader
-# sees at a glance that E3 is a different kind of claim -- measurement on real
+# sees at a glance that the corpus study is a different kind of claim -- measurement on real
 # data, not exact synthetic computation.
-E3_COLORS = {"code_prose": "#4a3aa7", "bilingual": "#e34948", "markov": "#008300"}
-E3_LABELS = {"code_prose": "code vs prose", "bilingual": "German vs English",
-             "markov": "Markov fixture"}
-E3_MARKERS = {"small": "D", "large": "v"}
+CORPUS_COLORS = {
+    "code_prose": CALM_PALETTE[0],
+    "bilingual": CALM_PALETTE[1],
+    "markov": CALM_PALETTE[2],
+}
+CORPUS_LABELS = {
+    "code_prose": "code vs prose",
+    "bilingual": "German vs English",
+    "markov": "Markov fixture",
+}
+CORPUS_MARKERS = {"small": "D", "large": "v"}
 
 MARKERS = ["o", "s", "^", "D", "v", "P"]
 
@@ -83,7 +94,7 @@ def apply_style() -> None:
             "axes.linewidth": 0.5,
             "axes.spines.top": True,
             "axes.spines.right": True,
-            "axes.grid": True,
+            "axes.grid": False,
             "grid.color": GRID,
             "grid.linewidth": 0.35,
             "grid.alpha": 1.0,
@@ -114,29 +125,27 @@ def apply_style() -> None:
 
 
 def n_color(N: int, all_N) -> str:
-    """Colour for a given ``N``: position in the ordered blue ramp."""
+    """Colour for a given ``N``: its position in the fixed palette order."""
     all_N = sorted(set(int(v) for v in all_N))
     idx = all_N.index(int(N))
-    if len(all_N) == 1:
-        return N_RAMP[-2]
-    pos = idx * (len(N_RAMP) - 1) / (len(all_N) - 1)
-    return N_RAMP[int(round(pos))]
+    return N_RAMP[idx % len(N_RAMP)]
 
 
 N_COLORS = N_RAMP
 
 
 def m_cmap():
-    """Viridis, as the spec prescribes for colour-by-``m`` small multiples."""
-    return plt.get_cmap("viridis")
+    """The shared categorical map for the discrete visibility levels."""
+    return ListedColormap(CALM_PALETTE, name="mpi_categorical")
 
 
 def law_style(law: str, param: float, pinned: bool) -> dict:
-    """Line style for a law: pinned laws get hue, the null control stays grey."""
+    """Line style for the four displayed laws in the paper palette."""
     if not pinned:
         return {"color": NULL_GREY, "linestyle": (0, (1, 1.6)), "linewidth": 1.1}
     if law == "product":
-        return {"color": CAT[0] if param < 0.7 else CAT[1], "linestyle": "-"}
+        # theta=0.8 is the paper's primary conditioned-product setting.
+        return {"color": CAT[0] if param >= 0.7 else CAT[4], "linestyle": "-"}
     return {"color": CAT[2], "linestyle": (0, (5, 1.5))}
 
 

@@ -106,14 +106,14 @@ class BruteLaw:
     def D_schedule(self, schedule: dict[tuple[int, ...], float], lam: float) -> float:
         return sum(prob * self.D_K(V, lam) for V, prob in schedule.items())
 
-    # -- E4: per-example moments, again with no reduction of any kind --------
+    # -- Per-example sampling-cost moments, with no reduction of any kind ----
 
     def excess_loss_moments(self, V: tuple[int, ...], lam: float) -> tuple[float, float]:
         r"""``(E[S], E[S^2])`` for ``S = log p_K(X_K|X_V) - log q_K(X_K|X_V)``.
 
         The first moment is ``D_K`` by definition; the second is what
-        :func:`mpi.e4.log_second_moment` claims to compute in closed form off
-        the two-point structure of ``S`` on each fibre.
+        :func:`mpi.low_visibility_sampling_cost.log_second_moment` computes
+        from the two-point structure of ``S`` on each fibre.
         """
         p, q = self.p, self.q(lam)
         keys = self._visible_keys(V)

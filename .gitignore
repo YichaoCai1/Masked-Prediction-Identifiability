@@ -12,3 +12,5 @@ documents/
 # Run logs and local archives
 logs/
 *.zip
+
+.agents

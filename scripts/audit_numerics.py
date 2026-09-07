@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 """Leg (c) of the numerical CI: float64 against mpmath at 50 digits.
 
-This is separated from ``run_all.py`` because arbitrary-precision arithmetic
+This is separated from ``run_studies.py`` because arbitrary-precision arithmetic
 costs ``O(m(N-m))`` mpf operations per cell -- seconds to minutes for the
 largest ``N`` -- whereas the whole float64 run matrix takes under a minute.
 
     python scripts/audit_numerics.py                 # 24 cells, N <= 255
     python scripts/audit_numerics.py --max-N 1023 --n-cells 40
 
-Writes ``results/audit.parquet``, which feeds appendix figure A7.
+Writes ``results/audit.parquet``, which feeds ``numerical_stability_audit``.
 """
 
 from __future__ import annotations
