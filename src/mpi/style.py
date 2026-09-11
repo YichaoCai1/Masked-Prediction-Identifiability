@@ -26,12 +26,12 @@ __all__ = [
 
 # -- fixed colormaps --------------------------------------------------------
 # User-approved paper palette, kept explicit so the mapping cannot drift with
-# plotting-library defaults.  The first two entries exactly match mpiViolet
-# and mpiRed in the main figure; the remaining hues are calm supporting
-# accents chosen to stay distinct from them and from one another.
+# plotting-library defaults.  The first entry exactly matches mpiViolet in the
+# main figure; the remaining hues are calm supporting accents chosen to stay
+# distinct from it and from one another.
 CALM_PALETTE = (
-    "#4A3AA7", "#E34948", "#2A7F82", "#C58A32", "#3568A8",
-    "#4F8A61", "#A95878", "#80634E", "#66717E", "#898781",
+    "#4A3AA7", "#A71C46", "#2A7F82", "#3568A8", "#4F8A61",
+    "#A95878", "#C58A32", "#80634E", "#66717E", "#898781",
 )
 CONTINUOUS_CMAP = LinearSegmentedColormap.from_list(
     "mpi_diverging",

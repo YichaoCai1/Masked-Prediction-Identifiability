@@ -746,7 +746,7 @@ def figure_blindness_decay_rates(art: dict, out_dir: Path, png: bool = False) ->
         ax.set_xlabel("$N$")
         ax.set_ylabel(r"fitted decay rate $\hat c_N$")
         ax.margins(x=0.16)
-        corner_note(ax, "dashed: predicted/reference rate",
+        corner_note(ax, "dashed: reference rate",
                     xy=(0.03, 0.97), ha="left", va="top")
 
     ff = _sel(fits, law=MAIN_LAW[0], param=MAIN_LAW[1], w=w, target="Delta_frac")
@@ -2175,13 +2175,14 @@ def figure_mode_weight_optimization(
                 ax.bar(
                     [position], [height], width=width, color=(color if filled else SURFACE),
                     edgecolor=color, linewidth=1.0,
-                    hatch="///" if censored else None, zorder=3,
+                    zorder=3,
                 )
                 if censored:
                     ax.annotate(
-                        "", xy=(position, height + 0.34),
-                        xytext=(position, height + 0.04),
-                        arrowprops=dict(arrowstyle="-|>", color=color, lw=0.9),
+                        "", xy=(position, height + 0.46),
+                        xytext=(position, height + 0.12),
+                        arrowprops=dict(arrowstyle="-|>", color=color, lw=0.9,
+                                        shrinkA=0, shrinkB=0, mutation_scale=7),
                     )
                     continue
                 lows = finite["t_half_ci_low"].astype(float)
@@ -2219,11 +2220,12 @@ def figure_mode_weight_optimization(
         method_handles = [
             Patch(facecolor=SECONDARY, edgecolor=SECONDARY, label="population GD"),
             Patch(facecolor=SURFACE, edgecolor=SECONDARY, label="SGD median"),
-            Patch(facecolor=SURFACE, edgecolor=SECONDARY, hatch="///",
-                  label="right-censored"),
+            Line2D([], [], color=SECONDARY, linestyle="none",
+                   marker=r"$\uparrow$", markersize=6, label="right-censored"),
         ]
         ax.legend(handles=method_handles, loc="upper right", fontsize=6.2,
-                  labelspacing=0.25, handlelength=1.2)
+                  bbox_to_anchor=(1.015, 1.0),
+                  labelspacing=0.55, handlelength=0.8, handletextpad=0.4)
 
     # The calibration bars benefit from horizontal separation, so this panel
     # is deliberately wider and shorter than its previous near-square canvas.
