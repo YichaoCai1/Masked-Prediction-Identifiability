@@ -489,7 +489,7 @@ def figure_mode_blindness_and_recovery(
             Line2D([], [], color=MUTED, marker="o", mfc="none", mew=1.0,
                    lw=0, ms=4.2, label="hollow: censored"),
             Line2D([], [], color=limit_color, lw=0.8, ls=(0, (1, 2)),
-                   label="dotted: indistinguishability limit"),
+                   label="dotted: reweighting-interval limit"),
         ]
         ax.legend(handles=schedule_handles + semantic_handles, loc="lower left",
                   ncol=1, fontsize=5.8, labelspacing=0.25,
